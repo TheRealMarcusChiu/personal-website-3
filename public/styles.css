@@ -1,20 +1,24 @@
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&display=swap');
 
 :root {
-  --bg:     #0e0d0b;
-  --text:   #817767;
-  --muted:  #6b6456;
-  --accent: #c8a96e;
-  --border: #2a2720;
+  --bg:     #0f0c09;
+  --text:   #8c8170;
+  --muted:  #5f574a;
+  --accent: #d8a942;
+  --accent-dim: #b78f3a;
+  --border: #29221a;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+::selection { background: #d8a942; color: #0f0c09; }
 
 html, body {
   min-height: 100%;
   background: var(--bg);
   color: var(--text);
   font-family: 'JetBrains Mono', monospace;
+  -webkit-font-smoothing: antialiased;
 }
 
 main {
@@ -37,4 +41,5 @@ main {
   border-bottom: 1px solid transparent;
   transition: border-color 0.2s ease;
 }
-.intro a:hover { border-color: var(--accent); }
+.intro a:hover { border-color: var(--accent); color: var(--accent); }
+
