@@ -47,7 +47,18 @@ class Component extends DCLogic {
   setContent = (el) => { this.contentEl = el; };
 
   componentDidMount() {
-    this._teardown = window.IntroTerminal.mount(this.contentEl, this.glowEl);
+    // Play the typewriter on a fresh load or refresh, but not when the visitor
+    // clicks a link and navigates back (browser reports "back_forward").
+    // bfcache restores don't remount this component at all, so they're covered.
+    this._teardown = window.IntroTerminal.mount(this.contentEl, this.glowEl, { animate: this._shouldAnimate() });
+  }
+
+  _shouldAnimate() {
+    try {
+      const nav = performance.getEntriesByType('navigation')[0];
+      if (nav && nav.type === 'back_forward') return false;
+    } catch (e) { /* Navigation Timing unavailable — default to animating */ }
+    return true;
   }
 
   componentWillUnmount() {

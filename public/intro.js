@@ -3,10 +3,45 @@
 // `window` so the inline DC component in index.html can drive it from its
 // lifecycle hooks.
 (function () {
-  // Reveal `contentEl`'s paragraphs with a typing effect and wire `glowEl` to
-  // the pointer. Returns a teardown function that stops timers and listeners.
-  function mount(contentEl, glowEl) {
+  // Reveal `contentEl`'s paragraphs and wire `glowEl` to the pointer. Returns a
+  // teardown function that stops timers and listeners. Pass `{ animate: false }`
+  // to reveal the text instantly (no typewriter) while keeping the glow.
+  function mount(contentEl, glowEl, options) {
     if (!contentEl) return function () {};
+    const animate = !options || options.animate !== false;
+
+    // --- cursor-following warm glow (no re-render, direct DOM) ---
+    let raf = null;
+    let tx = innerWidth * 0.6;
+    let ty = innerHeight * 0.26;
+    const apply = () => {
+      raf = null;
+      if (glowEl) {
+        glowEl.style.background =
+          'radial-gradient(460px circle at ' + tx + 'px ' + ty + 'px, rgba(231,173,77,0.07), transparent 60%)';
+      }
+    };
+    const move = (e) => {
+      tx = e.clientX; ty = e.clientY;
+      if (!raf) raf = requestAnimationFrame(apply);
+    };
+    window.addEventListener('pointermove', move, { passive: true });
+
+    let typeTimer = null;
+    let onVisible = null;
+    const teardown = () => {
+      window.removeEventListener('pointermove', move);
+      if (onVisible) document.removeEventListener('visibilitychange', onVisible);
+      if (typeTimer) clearTimeout(typeTimer);
+      if (raf) cancelAnimationFrame(raf);
+    };
+
+    // Returning visitors (back/forward navigation) skip the typewriter: just
+    // reveal the already-rendered text.
+    if (!animate) {
+      contentEl.style.opacity = '1';
+      return teardown;
+    }
 
     // --- terminal typewriter ---
     const paras = Array.from(contentEl.querySelectorAll('[data-para]'));
@@ -50,49 +85,55 @@
       });
     });
 
-    let idx = 0;
-    let typeTimer = null;
-    const tick = () => {
-      if (idx >= queue.length) return;
-      const step = queue[idx++];
+    // Precompute an absolute timeline (ms from start) for each step. Driving the
+    // loop off wall-clock deadlines — instead of trusting each setTimeout's
+    // delay — keeps the animation on schedule in a background tab, where timers
+    // are throttled to ~1/sec. On the next tick (or when the tab is refocused)
+    // every step whose deadline has passed is revealed at once, so the intro is
+    // already where it should be rather than frozen at the start.
+    const deadlines = new Array(queue.length);
+    let t = 420; // initial pause before typing begins
+    for (let i = 0; i < queue.length; i++) {
+      deadlines[i] = t;
+      const step = queue[i];
+      if (step.kind === 'para') {
+        t += i === 0 ? 0 : 360;
+      } else {
+        t += 17 + Math.random() * 20;
+        if (step.ch === ' ') t += 8;
+        else if (step.ch === ',') t += 110;
+        else if ('.!?'.includes(step.ch)) t += 240;
+      }
+    }
+
+    const reveal = (step) => {
       if (step.kind === 'para') {
         step.p.style.display = 'block';
-        step.p.appendChild(cursor);
-        typeTimer = setTimeout(tick, idx === 1 ? 0 : 360);
-        return;
+      } else {
+        step.target.appendChild(document.createTextNode(step.ch));
       }
-      step.target.appendChild(document.createTextNode(step.ch));
-      step.p.appendChild(cursor); // keep caret trailing the freshly typed glyph
-      let delay = 17 + Math.random() * 20;
-      if (step.ch === ' ') delay += 8;
-      else if (step.ch === ',') delay += 110;
-      else if ('.!?'.includes(step.ch)) delay += 240;
-      typeTimer = setTimeout(tick, delay);
+      step.p.appendChild(cursor); // keep caret trailing the latest glyph
     };
-    typeTimer = setTimeout(tick, 420);
 
-    // --- cursor-following warm glow (no re-render, direct DOM) ---
-    let raf = null;
-    let tx = innerWidth * 0.6;
-    let ty = innerHeight * 0.26;
-    const apply = () => {
-      raf = null;
-      if (glowEl) {
-        glowEl.style.background =
-          'radial-gradient(460px circle at ' + tx + 'px ' + ty + 'px, rgba(231,173,77,0.07), transparent 60%)';
+    const start = performance.now();
+    let idx = 0;
+    const run = () => {
+      if (typeTimer) { clearTimeout(typeTimer); typeTimer = null; }
+      const now = performance.now() - start;
+      while (idx < queue.length && deadlines[idx] <= now) reveal(queue[idx++]);
+      if (idx < queue.length) {
+        typeTimer = setTimeout(run, Math.max(0, deadlines[idx] - (performance.now() - start)));
       }
     };
-    const move = (e) => {
-      tx = e.clientX; ty = e.clientY;
-      if (!raf) raf = requestAnimationFrame(apply);
-    };
-    window.addEventListener('pointermove', move, { passive: true });
 
-    return function teardown() {
-      window.removeEventListener('pointermove', move);
-      if (typeTimer) clearTimeout(typeTimer);
-      if (raf) cancelAnimationFrame(raf);
-    };
+    // Catch up immediately when the tab is refocused, rather than waiting out a
+    // throttled timer.
+    onVisible = () => { if (!document.hidden) run(); };
+    document.addEventListener('visibilitychange', onVisible);
+
+    typeTimer = setTimeout(run, deadlines[0]);
+
+    return teardown;
   }
 
   window.IntroTerminal = { mount: mount };
