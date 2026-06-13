@@ -1,45 +1,102 @@
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&display=swap');
+/* JetBrains Mono is loaded via <link> in the <helmet> block of index.html. */
 
-:root {
-  --bg:     #0f0c09;
-  --text:   #8c8170;
-  --muted:  #5f574a;
-  --accent: #d8a942;
-  --accent-dim: #b78f3a;
-  --border: #29221a;
+html, body { margin: 0; padding: 0; background: #15110b; }
+* { box-sizing: border-box; }
+::selection { background: rgba(231, 173, 77, 0.22); color: #f3e9d6; }
+
+@keyframes blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+@keyframes haze  {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50%      { transform: translate3d(2%, -1.5%, 0) scale(1.08); }
 }
 
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-::selection { background: #d8a942; color: #0f0c09; }
-
-html, body {
-  min-height: 100%;
-  background: var(--bg);
-  color: var(--text);
-  font-family: 'JetBrains Mono', monospace;
-  -webkit-font-smoothing: antialiased;
+/* Full-viewport stage with a warm radial backdrop. */
+.stage {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: radial-gradient(140% 120% at 50% -10%, #1d1810 0%, #15110b 46%, #100d08 100%);
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
 }
 
-main {
-  max-width: 560px;
-  margin: 0 auto;
-  padding: 96px 24px 100px;
+/* Drifting ambient haze. */
+.haze {
+  position: absolute;
+  inset: -20%;
+  pointer-events: none;
+  opacity: 0.5;
+  background: radial-gradient(38% 42% at 62% 30%, rgba(231, 173, 77, 0.06), transparent 70%);
+  animation: haze 18s ease-in-out infinite;
 }
 
-.intro p {
-  font-size: 13px;
-  line-height: 2;
-  letter-spacing: 0.02em;
-  color: var(--text);
-  margin-bottom: 22px;
+/* Cursor-following warm glow (background is driven by intro.js). */
+.glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  transition: background 0.18s ease-out;
+  background: radial-gradient(440px circle at 60% 26%, rgba(231, 173, 77, 0.05), transparent 62%);
 }
 
-.intro a {
-  color: var(--accent);
+/* Film-grain noise overlay. */
+.noise {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+  opacity: 0.05;
+  mix-blend-mode: screen;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Inner vignette. */
+.vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 6;
+  box-shadow: inset 0 0 320px 60px rgba(0, 0, 0, 0.55);
+}
+
+.viewport {
+  position: relative;
+  z-index: 4;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 21vh 28px 10vh;
+}
+
+.content {
+  width: 100%;
+  max-width: 620px;
+  opacity: 0; /* revealed by intro.js once typing begins */
+  color: #9b9388;
+  font-size: clamp(15px, 1.04vw, 17.5px);
+  font-weight: 400;
+  line-height: 1.95;
+  letter-spacing: 0.01em;
+  text-wrap: pretty;
+}
+
+.para { margin: 0 0 1.55em; }
+.para:last-child { margin-bottom: 0; }
+
+.link {
+  color: #e7ad4d;
+  font-weight: 700;
   text-decoration: none;
-  border-bottom: 1px solid transparent;
-  transition: border-color 0.2s ease;
+  cursor: pointer;
+  background-image: linear-gradient(currentColor, currentColor);
+  background-size: 0% 1.5px;
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  transition: background-size 0.4s cubic-bezier(0.2, 0.7, 0.2, 1), color 0.3s ease, text-shadow 0.3s ease;
 }
-.intro a:hover { border-color: var(--accent); color: var(--accent); }
-
+.link:hover {
+  background-size: 100% 1.5px;
+  color: #f6c469;
+  text-shadow: 0 0 20px rgba(231, 173, 77, 0.45);
+}
