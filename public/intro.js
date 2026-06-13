@@ -29,9 +29,11 @@
 
     let typeTimer = null;
     let onVisible = null;
+    let onClick = null;
     const teardown = () => {
       window.removeEventListener('pointermove', move);
       if (onVisible) document.removeEventListener('visibilitychange', onVisible);
+      if (onClick) document.removeEventListener('click', onClick);
       if (typeTimer) clearTimeout(typeTimer);
       if (raf) cancelAnimationFrame(raf);
     };
@@ -130,6 +132,13 @@
     // throttled timer.
     onVisible = () => { if (!document.hidden) run(); };
     document.addEventListener('visibilitychange', onVisible);
+
+    // Click anywhere to skip straight to the fully-typed state.
+    onClick = () => {
+      if (typeTimer) { clearTimeout(typeTimer); typeTimer = null; }
+      while (idx < queue.length) reveal(queue[idx++]);
+    };
+    document.addEventListener('click', onClick);
 
     typeTimer = setTimeout(run, deadlines[0]);
 
