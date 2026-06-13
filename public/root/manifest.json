@@ -33,6 +33,9 @@
                 },
                 "today.txt": {
                   "type": "file"
+                },
+                "TODO.txt": {
+                  "type": "file"
                 }
               }
             },
