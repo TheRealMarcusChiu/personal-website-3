@@ -1,0 +1,3 @@
+a static-site generator that thinks in folders
+a tiny cli for my reading list
+rewrite var-log in go (maybe)
