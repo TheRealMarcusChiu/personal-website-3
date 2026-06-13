@@ -319,7 +319,7 @@ class Component extends DCLogic {
         const node = nodeAt(resolve(a));
         if (!node) { printText('cat: ' + a + ': No such file or directory', C.err); continue; }
         if (node.type === 'dir') { printText('cat: ' + a + ': Is a directory', C.err); continue; }
-        if (node.type === 'readme') { await typeReadme(); continue; }
+        if (node.type === 'readme') { renderReadme(); continue; }
         if (node.type === 'exec') { printScript(a, node); continue; }
         if (node.type === 'file') { node.lines.forEach((l) => printText(l, C.text)); continue; }
       }
