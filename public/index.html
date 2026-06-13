@@ -3,8 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<title>Marcus Chiu</title>
 <script src="./support.js"></script>
-<script src="./intro.js"></script>
 </head>
 <body>
 <x-dc>
@@ -12,61 +13,581 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
-  <link rel="icon" type="image/x-icon" href="favicon.ico">
-  <link rel="stylesheet" href="styles.css">
+  <style>
+    html, body { margin: 0; padding: 0; background: #15110b; }
+    * { box-sizing: border-box; }
+    ::selection { background: rgba(231,173,77,0.22); color: #f3e9d6; }
+    @keyframes blink { 0%,49% { opacity: 1; } 50%,100% { opacity: 0; } }
+    @keyframes haze  { 0%,100% { transform: translate3d(0,0,0) scale(1); } 50% { transform: translate3d(2%,-1.5%,0) scale(1.08); } }
+    .scr::-webkit-scrollbar { width: 10px; }
+    .scr::-webkit-scrollbar-thumb { background: rgba(231,173,77,0.14); border-radius: 10px; }
+    .scr::-webkit-scrollbar-track { background: transparent; }
+  </style>
 </helmet>
-<div ref="{{ setRoot }}" class="stage">
+<div ref="{{ setRoot }}" style="position: fixed; inset: 0; overflow: hidden; background: radial-gradient(140% 120% at 50% -10%, #1d1810 0%, #15110b 46%, #100d08 100%); font-family: 'JetBrains Mono', ui-monospace, monospace;">
 
-  <div class="haze"></div>
+  <div style="position: absolute; inset: -20%; pointer-events: none; opacity: 0.5; background: radial-gradient(38% 42% at 60% 24%, rgba(231,173,77,0.06), transparent 70%); animation: haze 18s ease-in-out infinite; z-index: 1;"></div>
 
-  <div ref="{{ setGlow }}" class="glow"></div>
+  <div ref="{{ setGlow }}" style="position: absolute; inset: 0; pointer-events: none; transition: background 0.18s ease-out; background: radial-gradient(440px circle at 60% 26%, rgba(231,173,77,0.05), transparent 62%); z-index: 1;"></div>
 
-  <div class="noise"></div>
+  <div style="position: absolute; inset: 0; pointer-events: none; z-index: 7; opacity: 0.045; mix-blend-mode: screen; background-image: url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E&quot;);"></div>
 
-  <div class="vignette"></div>
+  <div style="position: absolute; inset: 0; pointer-events: none; z-index: 7; opacity: 0.35; background-image: repeating-linear-gradient(0deg, rgba(0,0,0,0.18) 0px, rgba(0,0,0,0.18) 1px, transparent 2px, transparent 3px);"></div>
 
-  <main class="viewport">
-    <div ref="{{ setContent }}" class="content">
+  <div style="position: absolute; inset: 0; pointer-events: none; z-index: 8; box-shadow: inset 0 0 320px 70px rgba(0,0,0,0.6);"></div>
 
-      <p data-para class="para">Hi, my name is Marcus. I'm best reached via <a href="https://linktr.ee/marcuschiu" class="link">linktree</a> or <a href="mailto:marcuschiu9@gmail.com" class="link">email</a>.</p>
+  <div ref="{{ setScreen }}" class="scr" data-screen-label="Terminal" style="position: absolute; inset: 0; z-index: 4; overflow-y: auto; overflow-x: hidden; padding: 6vh clamp(22px, 7vw, 130px) 18vh; cursor: text;">
+    <div ref="{{ setOutput }}" style="max-width: 80ch; color: #c2b9a9; font-size: clamp(13.5px, 1.02vw, 16px); font-weight: 400; line-height: 1.72; letter-spacing: 0.01em; text-shadow: 0 0 1px rgba(231,173,77,0.08);"></div>
+  </div>
 
-      <p data-para class="para">I try to be present. I work on software systems, and they work with me. Along the way I keep a <a href="http://git.marcuschiu.com/var-log/" class="link">var-log</a> of notes for myself.</p>
-
-      <p data-para class="para">As far as me goes, I enjoy training the mind and the body, and collecting <a href="http://git.marcuschiu.com/quotes/" class="link">quotes</a> and <a href="http://git.marcuschiu.com/images/" class="link">stuff</a> from around the internet.</p>
-
-      <p data-para class="para">I like to <a href="https://github.com/TheRealMarcusChiu" class="link">code</a> and here are some of my <a href="http://git.marcuschiu.com/projects/" class="link">projects</a>. When I'm not writing code, I'm writing about <a href="http://git.marcuschiu.com/tech/" class="link">tech</a> or whatever <a href="http://git.marcuschiu.com/thoughts/" class="link">thoughts</a> that comes across my mind.</p>
-
-    </div>
-  </main>
+  <input ref="{{ setInput }}" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="terminal input" style="position: fixed; bottom: 0; left: 0; width: 1px; height: 1px; padding: 0; border: 0; outline: 0; opacity: 0; color: transparent; background: transparent; caret-color: transparent; z-index: 0;">
 </div>
 </x-dc>
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script type="text/x-dc" data-dc-script>
+<script type="text/x-dc" data-dc-script>
 class Component extends DCLogic {
   setRoot = (el) => { this.rootEl = el; };
   setGlow = (el) => { this.glowEl = el; };
-  setContent = (el) => { this.contentEl = el; };
+  setScreen = (el) => { this.screenEl = el; };
+  setOutput = (el) => { this.outEl = el; };
+  setInput = (el) => { this.inputEl = el; };
 
   componentDidMount() {
-    // Play the typewriter on a fresh load or refresh, but not when the visitor
-    // clicks a link and navigates back (browser reports "back_forward").
-    // bfcache restores don't remount this component at all, so they're covered.
-    this._teardown = window.IntroTerminal.mount(this.contentEl, this.glowEl, { animate: this._shouldAnimate() });
-  }
+    const self = this;
+    const out = this.outEl, screen = this.screenEl, input = this.inputEl;
+    if (!out || !screen || !input) return;
 
-  _shouldAnimate() {
+    const C = {
+      text: '#c2b9a9', dim: '#6f675b', user: '#e7ad4d', path: '#9aa886',
+      punct: '#8a8073', exec: '#a7b76e', dir: '#7e96b4', err: '#cf8f6f', link: '#e7ad4d'
+    };
+
+    // ---- link targets — replace these URLs with the real ones ----
+    const LINKS = {
+      'linktree.sh': 'https://linktr.ee/marcuschiu',
+      'email.sh':    'mailto:marcuschiu9@gmail.com',
+      'var-log.sh':  'http://git.marcuschiu.com/var-log/',
+      'quotes.sh':   'http://git.marcuschiu.com/quotes/',
+      'stuff.sh':    'http://git.marcuschiu.com/images/',
+      'code.sh':     'https://github.com/TheRealMarcusChiu',
+      'projects.sh': 'http://git.marcuschiu.com/projects/',
+      'tech.sh':     'http://git.marcuschiu.com/tech/',
+      'thoughts.sh': 'http://git.marcuschiu.com/thoughts/'
+    };
+
+    // ---- virtual filesystem ----
+    const dir = (children) => ({ type: 'dir', children });
+    const exec = (file) => ({ type: 'exec', url: LINKS[file], name: file });
+    const file = (lines) => ({ type: 'file', lines });
+    const home = dir({
+      'README.txt': { type: 'readme' },
+      'linktree.sh': exec('linktree.sh'),
+      'email.sh': exec('email.sh'),
+      'var-log.sh': exec('var-log.sh'),
+      'quotes.sh': exec('quotes.sh'),
+      'stuff.sh': exec('stuff.sh'),
+      'code.sh': exec('code.sh'),
+      'projects.sh': exec('projects.sh'),
+      'tech.sh': exec('tech.sh'),
+      'thoughts.sh': exec('thoughts.sh'),
+      'notes': dir({
+        'today.txt': file(['- ship the terminal homepage', '- 40 min zone 2 + mobility', '- read: the unix programming environment']),
+        'ideas.txt': file(['a static-site generator that thinks in folders', 'a tiny cli for my reading list', 'rewrite var-log in go (maybe)'])
+      }),
+      '.profile': file(['export EDITOR=vim', 'export PATH=$HOME/bin:$PATH', 'alias ll="ls -la"']),
+      '.bashrc': file(['# nothing to see here', 'PS1="\\u@\\h:\\w$ "'])
+    });
+    const ROOT = dir({ home: dir({ marcus: home }) });
+    const HOME = ['home', 'marcus'];
+    let cwd = HOME.slice();
+
+    const nodeAt = (segs) => {
+      let n = ROOT;
+      for (const s of segs) { if (n.type !== 'dir' || !n.children[s]) return null; n = n.children[s]; }
+      return n;
+    };
+    const curNode = () => nodeAt(cwd);
+    const resolve = (p) => {
+      if (p === undefined || p === '~' || p === '') return HOME.slice();
+      let segs;
+      if (p.charAt(0) === '/') { segs = []; }
+      else if (p.indexOf('~/') === 0) { segs = HOME.slice(); p = p.slice(2); }
+      else { segs = cwd.slice(); }
+      for (const part of p.split('/')) {
+        if (part === '' || part === '.') continue;
+        if (part === '..') { if (segs.length) segs.pop(); }
+        else segs.push(part);
+      }
+      return segs;
+    };
+    const promptPath = () => {
+      if (cwd.length >= 2 && cwd[0] === 'home' && cwd[1] === 'marcus') {
+        const rest = cwd.slice(2);
+        return rest.length ? '~/' + rest.join('/') : '~';
+      }
+      return '/' + cwd.join('/');
+    };
+
+    // ---- dom helpers ----
+    const span = (text, color, extra) => {
+      const s = document.createElement('span');
+      s.textContent = text;
+      if (color) s.style.color = color;
+      if (extra) Object.assign(s.style, extra);
+      return s;
+    };
+    const lineEl = () => {
+      const d = document.createElement('div');
+      d.style.cssText = 'white-space:pre-wrap; word-break:break-word; min-height:1.72em;';
+      return d;
+    };
+    const scroll = () => { screen.scrollTop = screen.scrollHeight; };
+    let promptLine = null, cmdSpan = null, interactive = false, booting = false;
+    const printEl = (el) => {
+      if (promptLine && promptLine.parentNode === out) out.insertBefore(el, promptLine);
+      else out.appendChild(el);
+      scroll();
+      return el;
+    };
+    const printText = (text, color) => {
+      const d = lineEl();
+      d.appendChild(text === '' ? document.createTextNode(' ') : span(text, color || C.text));
+      return printEl(d);
+    };
+
+    // shared blinking block caret
+    const caret = document.createElement('span');
+    caret.textContent = '\u2588';
+    caret.style.cssText = 'color:' + C.user + '; display:inline-block; animation: blink 1.05s steps(1) infinite;';
+
+    const promptPrefix = () => {
+      const f = document.createElement('span');
+      f.appendChild(span('marcus@home', C.user, { fontWeight: '700' }));
+      f.appendChild(span(':', C.punct));
+      f.appendChild(span(promptPath(), C.path));
+      f.appendChild(span('$ ', C.punct));
+      return f;
+    };
+
+    const history = [];
+    let histIdx = 0;
+    const renderInput = () => { if (cmdSpan) cmdSpan.textContent = input.value; };
+    const showPrompt = () => {
+      promptLine = lineEl();
+      promptLine.appendChild(promptPrefix());
+      cmdSpan = span('', C.text);
+      promptLine.appendChild(cmdSpan);
+      promptLine.appendChild(caret);
+      out.appendChild(promptLine);
+      interactive = true;
+      input.value = '';
+      histIdx = history.length;
+      scroll();
+      input.focus();
+    };
+    const commitPrompt = (cmd) => {
+      if (caret.parentNode) caret.parentNode.removeChild(caret);
+      if (cmdSpan) cmdSpan.textContent = cmd;
+      interactive = false;
+      promptLine = null;
+    };
+
+    // ---- README (the intro) ----
+    const L = (t, f) => ({ t: t, link: f });
+    const README = [
+      ["Hi, my name is Marcus. I'm best reached via ", L('linktree', 'linktree.sh'), ' or ', L('email', 'email.sh'), '.'],
+      ['I try to be present. I work on software systems, and they work with me. Along the way I keep a ', L('var-log', 'var-log.sh'), ' of notes for myself.'],
+      ['As far as me goes, I enjoy training the mind and the body, and collecting ', L('quotes', 'quotes.sh'), ' and ', L('stuff', 'stuff.sh'), ' from around the internet.'],
+      ["I like to ", L('code', 'code.sh'), ' and here are some of my ', L('projects', 'projects.sh'), ". When I'm not writing code, I'm writing about ", L('tech', 'tech.sh'), ' or whatever ', L('thoughts', 'thoughts.sh'), ' that comes across my mind.']
+    ];
+    const HINT = "tip: 'ls' to look around · './<name>.sh' opens a link · 'help' for commands";
+
+    const linkSpan = (label, fileName) => {
+      const a = document.createElement('a');
+      a.textContent = label;
+      a.href = LINKS[fileName];
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      a.style.cssText = 'color:' + C.link + '; font-weight:700; text-decoration:none; cursor:pointer; transition:color 0.2s ease, text-shadow 0.2s ease;';
+      a.addEventListener('mouseenter', () => { a.style.color = '#f6c469'; a.style.textShadow = '0 0 18px rgba(231,173,77,0.45)'; a.style.textDecoration = 'underline'; });
+      a.addEventListener('mouseleave', () => { a.style.color = C.link; a.style.textShadow = 'none'; a.style.textDecoration = 'none'; });
+      return a;
+    };
+
+    const typeReadme = () => new Promise((res) => {
+      const steps = [];
+      README.forEach((para, pi) => {
+        steps.push({ para: true, blank: pi > 0 });
+        para.forEach((seg) => {
+          if (typeof seg === 'string') { for (const ch of seg) steps.push({ ch: ch, link: null }); }
+          else { for (const ch of seg.t) steps.push({ ch: ch, link: seg.link, label: seg.t }); }
+        });
+      });
+      let curPara = null, curLink = null, curLinkName = null, i = 0;
+      const tick = () => {
+        if (i >= steps.length) {
+          printText('', C.dim);
+          printText(HINT, C.dim);
+          if (caret.parentNode) caret.parentNode.removeChild(caret);
+          res();
+          return;
+        }
+        const s = steps[i++];
+        if (s.para) {
+          if (s.blank) printText('', C.dim);
+          curPara = lineEl(); printEl(curPara); curLink = null; curLinkName = null;
+          curPara.appendChild(caret);
+          self._t = setTimeout(tick, 55);
+          return;
+        }
+        if (s.link) {
+          if (curLinkName !== s.link || !curLink) {
+            curLink = linkSpan('', s.link);
+            curPara.insertBefore(curLink, caret);
+            curLinkName = s.link;
+          }
+          curLink.textContent += s.ch;
+        } else {
+          curLink = null; curLinkName = null;
+          curPara.insertBefore(document.createTextNode(s.ch), caret);
+        }
+        scroll();
+        let d = 15 + Math.random() * 18;
+        if (s.ch === ' ') d += 6; else if (s.ch === ',') d += 90; else if ('.!?'.indexOf(s.ch) >= 0) d += 200;
+        self._t = setTimeout(tick, d);
+      };
+      self._t = setTimeout(tick, 120);
+    });
+
+    // ---- commands ----
+    const colorFor = (node) => {
+      if (!node) return C.text;
+      if (node.type === 'dir') return C.dir;
+      if (node.type === 'exec') return C.exec;
+      return C.text;
+    };
+    const listNames = (node, pred) => {
+      if (!node || node.type !== 'dir') return [];
+      return Object.keys(node.children).filter((n) => n.charAt(0) !== '.').filter((n) => pred ? pred(node.children[n]) : true);
+    };
+
+    const cmdLs = (args) => {
+      const flags = args.filter((a) => a.charAt(0) === '-').join('');
+      const showAll = flags.indexOf('a') >= 0, long = flags.indexOf('l') >= 0;
+      const targets = args.filter((a) => a.charAt(0) !== '-');
+      const segs = resolve(targets[0] === undefined ? '.' : targets[0]);
+      const node = nodeAt(segs);
+      if (!node) { printText('ls: ' + (targets[0] || '') + ': No such file or directory', C.err); return; }
+      if (node.type !== 'dir') { printText(targets[0], colorFor(node)); return; }
+      let names = Object.keys(node.children);
+      names = showAll ? ['.', '..'].concat(names.sort()) : names.filter((n) => n.charAt(0) !== '.').sort();
+      if (long) {
+        names.forEach((n) => {
+          const child = (n === '.' || n === '..') ? { type: 'dir' } : node.children[n];
+          const isDir = child.type === 'dir', isExec = child.type === 'exec';
+          const perm = isDir ? 'drwxr-xr-x' : isExec ? '-rwxr-xr-x' : '-rw-r--r--';
+          const size = isDir ? '512' : String(180 + n.length * 11);
+          const d = lineEl();
+          d.appendChild(span(perm + '  marcus  staff  ' + size.padStart(5) + '  13 Jun 00:32  ', C.dim));
+          d.appendChild(span(n + (isDir ? '/' : ''), colorFor(child)));
+          printEl(d);
+        });
+      } else {
+        const d = lineEl();
+        names.forEach((n, idx) => {
+          const child = (n === '.' || n === '..') ? { type: 'dir' } : node.children[n];
+          d.appendChild(span(n + (child.type === 'dir' ? '/' : ''), colorFor(child)));
+          if (idx < names.length - 1) d.appendChild(span('    ', C.text));
+        });
+        printEl(d);
+      }
+    };
+    const cmdCd = (arg) => {
+      const segs = resolve(arg === undefined ? '~' : arg);
+      const node = nodeAt(segs);
+      if (!node) { printText('cd: no such file or directory: ' + arg, C.err); return; }
+      if (node.type !== 'dir') { printText('cd: not a directory: ' + arg, C.err); return; }
+      cwd = segs;
+    };
+    const printScript = (name, node) => {
+      ['#!/bin/sh', '# opens ' + name.replace('.sh', '') + ' in a new tab', 'open "' + node.url + '"'].forEach((l) => {
+        printText(l, l.charAt(0) === '#' ? C.dim : C.text);
+      });
+    };
+    const cmdCat = async (args) => {
+      if (args.length === 0) { printText('cat: missing file operand', C.err); return; }
+      for (const a of args) {
+        const node = nodeAt(resolve(a));
+        if (!node) { printText('cat: ' + a + ': No such file or directory', C.err); continue; }
+        if (node.type === 'dir') { printText('cat: ' + a + ': Is a directory', C.err); continue; }
+        if (node.type === 'readme') { await typeReadme(); continue; }
+        if (node.type === 'exec') { printScript(a, node); continue; }
+        if (node.type === 'file') { node.lines.forEach((l) => printText(l, C.text)); continue; }
+      }
+    };
+    const cmdHelp = () => {
+      [['whoami', 'print the current user'],
+       ['ls [-a] [-l]', 'list directory contents'],
+       ['cd [dir]', 'change directory'],
+       ['pwd', 'print working directory'],
+       ['cat <file>', 'print a file — try README.txt'],
+       ['./<name>.sh', 'run a script — opens that link'],
+       ['echo <text>', 'print text'],
+       ['date', 'show the current date'],
+       ['history', 'show command history'],
+       ['clear', 'clear the screen'],
+       ['help', 'show this message']].forEach(([c, d]) => {
+        const row = lineEl();
+        row.appendChild(span('  ' + c.padEnd(16), C.user));
+        row.appendChild(span(d, C.dim));
+        printEl(row);
+      });
+      printText('', C.dim);
+      printText('  Tab autocompletes · \u2191/\u2193 walk history', C.dim);
+    };
+    const runScript = (cmd, argv) => {
+      let name;
+      if (cmd.indexOf('./') === 0) name = cmd.slice(2);
+      else { name = argv[1] || ''; if (name.indexOf('./') === 0) name = name.slice(2); }
+      if (!name) { printText(cmd + ': missing file operand', C.err); return; }
+      const node = (curNode().children || {})[name];
+      if (!node) { printText('zsh: no such file or directory: ' + (cmd.indexOf('./') === 0 ? cmd : name), C.err); return; }
+      if (node.type !== 'exec') { printText('zsh: permission denied: ' + name, C.err); return; }
+      const d = lineEl();
+      d.appendChild(span('\u2192 opening ', C.dim));
+      d.appendChild(span(node.url, C.link));
+      d.appendChild(span(' \u2026', C.dim));
+      printEl(d);
+      try { window.open(node.url, '_blank', 'noopener'); } catch (e) {}
+    };
+
+    const execute = async (raw) => {
+      const line = raw.trim();
+      if (line === '') return;
+      history.push(line); histIdx = history.length;
+      const argv = line.split(/\s+/);
+      const cmd = argv[0];
+      if (cmd.indexOf('./') === 0 || cmd === 'sh' || cmd === 'bash' || cmd === 'open') { runScript(cmd, argv); return; }
+      switch (cmd) {
+        case 'help': cmdHelp(); return;
+        case 'whoami': printText('marcus', C.text); return;
+        case 'pwd': printText('/' + cwd.join('/'), C.text); return;
+        case 'ls': cmdLs(argv.slice(1)); return;
+        case 'cd': cmdCd(argv[1]); return;
+        case 'cat': await cmdCat(argv.slice(1)); return;
+        case 'echo': printText(argv.slice(1).join(' '), C.text); return;
+        case 'clear': out.innerHTML = ''; return;
+        case 'date': printText(new Date().toString(), C.text); return;
+        case 'uname': printText(argv.indexOf('-a') >= 0 ? 'Darwin home 23.5.0 arm64' : 'Darwin', C.text); return;
+        case 'history': history.forEach((h, idx) => {
+          const d = lineEl();
+          d.appendChild(span(String(idx + 1).padStart(4) + '  ', C.dim));
+          d.appendChild(span(h, C.text));
+          printEl(d);
+        }); return;
+        default: {
+          const d = lineEl();
+          d.appendChild(span('zsh: command not found: ' + cmd, C.err));
+          printEl(d);
+          return;
+        }
+      }
+    };
+
+    // ---- autocomplete ----
+    const COMMANDS = ['help', 'whoami', 'ls', 'cd', 'pwd', 'cat', 'echo', 'clear', 'date', 'history', 'uname'];
+    const commonPrefix = (arr) => {
+      if (!arr.length) return '';
+      let p = arr[0];
+      for (const s of arr) { let j = 0; while (j < p.length && j < s.length && p[j] === s[j]) j++; p = p.slice(0, j); }
+      return p;
+    };
+    const complete = () => {
+      const v = input.value;
+      const atEndSpace = /\s$/.test(v);
+      const parts = v.length ? v.split(/\s+/) : [''];
+      const editing = atEndSpace ? '' : parts[parts.length - 1];
+      let pool = [];
+      if (parts.length === 1 && !atEndSpace) {
+        if (editing.indexOf('./') === 0) pool = listNames(curNode(), (n) => n.type === 'exec').map((n) => './' + n);
+        else pool = COMMANDS.concat(listNames(curNode(), (n) => n.type === 'exec').map((n) => './' + n));
+      } else {
+        const cmd = parts[0];
+        if (cmd === 'cd') pool = listNames(curNode(), (n) => n.type === 'dir').map((n) => n + '/');
+        else pool = listNames(curNode()).map((n) => n + (curNode().children[n].type === 'dir' ? '/' : ''));
+      }
+      const matches = pool.filter((p) => p.indexOf(editing) === 0);
+      if (matches.length === 0) return;
+      if (matches.length === 1) {
+        parts[parts.length - 1] = matches[0];
+        input.value = parts.join(' ') + (matches[0].slice(-1) === '/' ? '' : ' ');
+      } else {
+        const cp = commonPrefix(matches);
+        if (cp.length > editing.length) { parts[parts.length - 1] = cp; input.value = parts.join(' '); }
+        else {
+          const d = lineEl();
+          matches.forEach((m, idx) => { d.appendChild(span(m, colorFor((curNode().children || {})[m.replace('./', '').replace('/', '')]))); if (idx < matches.length - 1) d.appendChild(span('    ', C.text)); });
+          printEl(d);
+        }
+      }
+      renderInput();
+    };
+
+    // ---- key handling ----
+    input.addEventListener('input', renderInput);
+    input.addEventListener('keydown', (e) => {
+      if (booting) { e.preventDefault(); finishBoot(); return; }
+      if (!interactive) { e.preventDefault(); return; }
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const cmd = input.value;
+        commitPrompt(cmd);
+        Promise.resolve(execute(cmd)).then(() => showPrompt());
+      } else if (e.key === 'Tab') {
+        e.preventDefault(); complete();
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (history.length) { histIdx = Math.max(0, histIdx - 1); input.value = history[histIdx] || ''; renderInput(); }
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        histIdx = Math.min(history.length, histIdx + 1); input.value = history[histIdx] || ''; renderInput();
+      } else if (e.key === 'l' && e.ctrlKey) {
+        e.preventDefault();
+        const v = input.value; out.innerHTML = ''; promptLine = null; showPrompt(); input.value = v; renderInput();
+      } else if (e.key === 'c' && e.ctrlKey) {
+        const sel = window.getSelection && String(window.getSelection());
+        if (sel && sel.length) return;            // let the copy go through
+        e.preventDefault();
+        commitPrompt(input.value + ' ^C'); showPrompt();
+      }
+    });
+    screen.addEventListener('mousedown', (e) => {
+      if (booting) { finishBoot(); setTimeout(() => input.focus(), 0); }
+    });
+    screen.addEventListener('click', (e) => {
+      if (booting) return;
+      if (e.target.closest && e.target.closest('a')) return;     // let links behave like links
+      const sel = window.getSelection && String(window.getSelection());
+      if (sel && sel.length) return;                              // preserve a text selection
+      input.focus();
+    });
+    // copy the visible selection even though a hidden input holds focus
+    this._copy = (e) => {
+      const sel = window.getSelection && String(window.getSelection());
+      if (sel && sel.length && e.clipboardData) { e.clipboardData.setData('text/plain', sel); e.preventDefault(); }
+    };
+    document.addEventListener('copy', this._copy);
+
+    // ---- boot: auto-run cat README.txt ----
+    const wait = (ms) => new Promise((r) => { self._t = setTimeout(r, ms); });
+    const typeCommand = (text) => new Promise((res) => {
+      let i = 0;
+      const tick = () => {
+        if (i >= text.length) { res(); return; }
+        cmdSpan.textContent += text[i++]; scroll();
+        self._t = setTimeout(tick, 55 + Math.random() * 45);
+      };
+      self._t = setTimeout(tick, 280);
+    });
+    const renderReadme = () => {
+      README.forEach((para, pi) => {
+        if (pi > 0) printText('', C.dim);
+        const line = lineEl();
+        para.forEach((seg) => {
+          if (typeof seg === 'string') line.appendChild(document.createTextNode(seg));
+          else line.appendChild(linkSpan(seg.t, seg.link));
+        });
+        printEl(line);
+      });
+      printText('', C.dim);
+      printText(HINT, C.dim);
+    };
+
+    // only auto-type on a fresh load / refresh — skip the animation on back/forward navigation
+    const navEntry = (performance.getEntriesByType && performance.getEntriesByType('navigation')[0]) || null;
+    const skipTyping = navEntry ? navEntry.type === 'back_forward' : false;
+
+    // "Last login" reflects the previous visit (stored in localStorage); first visit gets a greeting
+    const fmtStamp = (d) => {
+      const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      const mons = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const p = (n) => String(n).padStart(2, '0');
+      return days[d.getDay()] + ' ' + mons[d.getMonth()] + ' ' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds());
+    };
+    let loginLine;
     try {
-      const nav = performance.getEntriesByType('navigation')[0];
-      if (nav && nav.type === 'back_forward') return false;
-    } catch (e) { /* Navigation Timing unavailable — default to animating */ }
-    return true;
+      const prev = localStorage.getItem('mc_lastLogin');
+      loginLine = prev ? 'Last login: ' + prev + ' on ttys001' : 'Welcome to marcus@home \u00b7 first login on ttys001';
+      localStorage.setItem('mc_lastLogin', fmtStamp(new Date()));
+    } catch (e) {
+      loginLine = 'Last login: ' + fmtStamp(new Date()) + ' on ttys001';
+    }
+
+    const renderBooted = () => {
+      const committed = lineEl();
+      committed.appendChild(promptPrefix());
+      committed.appendChild(span('cat README.txt', C.text));
+      out.appendChild(committed);
+      renderReadme();
+      showPrompt();
+    };
+    // a click or keypress during the intro fast-forwards to the finished screen
+    const finishBoot = () => {
+      if (!booting) return;
+      booting = false;
+      if (self._t) { clearTimeout(self._t); self._t = null; }
+      if (caret.parentNode) caret.parentNode.removeChild(caret);
+      out.innerHTML = '';
+      promptLine = null; cmdSpan = null; interactive = false;
+      printText(loginLine, C.dim);
+      printText('', C.dim);
+      renderBooted();
+    };
+
+    const boot = async () => {
+      printText(loginLine, C.dim);
+      printText('', C.dim);
+      if (skipTyping) { renderBooted(); return; }
+      booting = true;
+      promptLine = lineEl();
+      promptLine.appendChild(promptPrefix());
+      cmdSpan = span('', C.text);
+      promptLine.appendChild(cmdSpan);
+      promptLine.appendChild(caret);
+      out.appendChild(promptLine);
+      scroll();
+      input.focus();
+      await typeCommand('cat README.txt');
+      await wait(320);
+      commitPrompt('cat README.txt');
+      booting = false;
+      renderReadme();
+      showPrompt();
+    };
+    boot();
+
+    // fast-forward the intro on any interaction
+    this._bootSkipKey = (e) => { if (booting) { finishBoot(); e.preventDefault(); e.stopPropagation(); } };
+    window.addEventListener('keydown', this._bootSkipKey, true);
+
+    // ---- cursor-following warm glow ----
+    let raf = null, tx = innerWidth * 0.6, ty = innerHeight * 0.26;
+    const apply = () => {
+      raf = null;
+      if (this.glowEl) this.glowEl.style.background = 'radial-gradient(460px circle at ' + tx + 'px ' + ty + 'px, rgba(231,173,77,0.07), transparent 60%)';
+    };
+    this._move = (e) => { tx = e.clientX; ty = e.clientY; if (!raf) raf = requestAnimationFrame(apply); };
+    window.addEventListener('pointermove', this._move, { passive: true });
   }
 
   componentWillUnmount() {
-    if (this._teardown) this._teardown();
+    if (this._move) window.removeEventListener('pointermove', this._move);
+    if (this._bootSkipKey) window.removeEventListener('keydown', this._bootSkipKey, true);
+    if (this._copy) document.removeEventListener('copy', this._copy);
+    if (this._t) clearTimeout(this._t);
   }
 
   renderVals() {
-    return { setRoot: this.setRoot, setGlow: this.setGlow, setContent: this.setContent };
+    return { setRoot: this.setRoot, setGlow: this.setGlow, setScreen: this.setScreen, setOutput: this.setOutput, setInput: this.setInput };
   }
 }
 </script>
