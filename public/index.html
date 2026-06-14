@@ -10,6 +10,12 @@
 <script src="./root/fs.js"></script>
 </head>
 <body>
+<!--
+     curious? good. you're already doing it right.
+     this terminal keeps secrets. start here:   ls -a    (then think like it's 1995)
+     not everything is in `help`. become root. find the flag.
+                                                              — marcus
+-->
 <x-dc>
 <helmet>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -174,6 +180,7 @@ class Component extends DCLogic {
     const readFile = (segs) => {
       const key = pathKey(segs);
       if (Object.prototype.hasOwnProperty.call(overlay.files, key)) return Promise.resolve(overlay.files[key]);
+      if (typeof EGG_FILES !== 'undefined' && Object.prototype.hasOwnProperty.call(EGG_FILES, key)) return Promise.resolve(EGG_FILES[key]);
       return Promise.resolve(fetchText(segs));
     };
     // delete a node + every overlay entry beneath it
@@ -204,6 +211,7 @@ class Component extends DCLogic {
     };
     const scroll = () => { screen.scrollTop = screen.scrollHeight; };
     let promptLine = null, cmdSpan = null, interactive = false, booting = false, vimActive = false;
+    let rootMode = false, poweredOff = false;   // sudo su / exit easter eggs
     const printEl = (el) => {
       if (promptLine && promptLine.parentNode === out) out.insertBefore(el, promptLine);
       else out.appendChild(el);
@@ -223,14 +231,16 @@ class Component extends DCLogic {
 
     const promptPrefix = () => {
       const f = document.createElement('span');
-      f.appendChild(span('marcus@home', C.user, { fontWeight: '700' }));
+      f.appendChild(span(rootMode ? 'root@home' : 'marcus@home', rootMode ? C.err : C.user, { fontWeight: '700' }));
       f.appendChild(span(':', C.punct));
       f.appendChild(span(promptPath(), C.path));
-      f.appendChild(span('$ ', C.punct));
+      f.appendChild(span(rootMode ? '# ' : '$ ', C.punct));
       return f;
     };
 
     const history = [];
+    // seed a "previous session" — a breadcrumb trail for the curious (↑ / history)
+    ['ls -a', 'cat .plan', 'neofetch'].forEach((h) => history.push(h));
     let histIdx = 0;
     const renderInput = () => { if (cmdSpan) cmdSpan.textContent = input.value; };
     const showPrompt = () => {
@@ -351,6 +361,7 @@ class Component extends DCLogic {
       const showAll = flags.indexOf('a') >= 0, long = flags.indexOf('l') >= 0;
       const targets = args.filter((a) => a.charAt(0) !== '-');
       const segs = resolve(targets[0] === undefined ? '.' : targets[0]);
+      if (sealed(segs)) { printText('ls: ' + (targets[0] || '') + ': Permission denied', C.err); return; }
       const node = nodeAt(segs);
       if (!node) { printText('ls: ' + (targets[0] || '') + ': No such file or directory', C.err); return; }
       if (node.type !== 'dir') { printText(targets[0], colorFor(node)); return; }
@@ -379,6 +390,7 @@ class Component extends DCLogic {
     };
     const cmdCd = (arg) => {
       const segs = resolve(arg === undefined ? '~' : arg);
+      if (sealed(segs)) { printText('cd: permission denied: ' + arg, C.err); return; }
       const node = nodeAt(segs);
       if (!node) { printText('cd: no such file or directory: ' + arg, C.err); return; }
       if (node.type !== 'dir') { printText('cd: not a directory: ' + arg, C.err); return; }
@@ -388,6 +400,7 @@ class Component extends DCLogic {
       if (args.length === 0) { printText('cat: missing file operand', C.err); return; }
       for (const a of args) {
         const segs = resolve(a);
+        if (sealed(segs)) { printText('cat: ' + a + ': Permission denied', C.err); continue; }
         const node = nodeAt(segs);
         if (!node) { printText('cat: ' + a + ': No such file or directory', C.err); continue; }
         if (node.type === 'dir') { printText('cat: ' + a + ': Is a directory', C.err); continue; }
@@ -466,6 +479,7 @@ class Component extends DCLogic {
       const recursive = /[rR]/.test(flags), force = /f/.test(flags);
       const targets = args.filter((a) => a.charAt(0) !== '-');
       if (!targets.length) { printText('rm: missing operand', C.err); return; }
+      if (recursive && targets.some((t) => isCatastrophic(resolve(t)))) return rmFakeout();   // nukes nothing
       for (const t of targets) {
         const segs = resolve(t);
         const node = nodeAt(segs);
@@ -918,6 +932,282 @@ class Component extends DCLogic {
       render();
     });
 
+    // ====================================================================
+    // ====  EASTER EGGS  (hidden — intentionally absent from COMMANDS/help)
+    // ====================================================================
+
+    // ---- CRT colour themes (Konami code + `theme` command) ----
+    let theme = 'amber';
+    try { theme = localStorage.getItem('mc_theme') || 'amber'; } catch (e) {}
+    const THEMES = { amber: 'none', green: 'hue-rotate(72deg) saturate(1.15)', blue: 'hue-rotate(160deg) saturate(1.1)', mono: 'grayscale(1) brightness(1.12)' };
+    const setTheme = (name) => {
+      if (!THEMES[name]) return false;
+      theme = name;
+      if (self.rootEl) self.rootEl.style.filter = THEMES[name] === 'none' ? '' : THEMES[name];
+      try { localStorage.setItem('mc_theme', name); } catch (e) {}
+      return true;
+    };
+    const cmdTheme = (args) => {
+      const name = args[0];
+      if (!name) { printText('theme: ' + theme + '  ·  options: ' + Object.keys(THEMES).join(', '), C.dim); return; }
+      if (setTheme(name)) printText('phosphor set to ' + name, C.exec);
+      else printText('theme: unknown theme: ' + name + '  (try: ' + Object.keys(THEMES).join(', ') + ')', C.err);
+    };
+
+    // ---- matrix rain (the `matrix` command + the idle screensaver) ----
+    let fxActive = false, matrixRAF = null, matrixCv = null, matrixResize = null;
+    const stopMatrix = () => {
+      if (matrixRAF) cancelAnimationFrame(matrixRAF); matrixRAF = null;
+      if (matrixResize) window.removeEventListener('resize', matrixResize); matrixResize = null;
+      if (matrixCv && matrixCv.parentNode) matrixCv.parentNode.removeChild(matrixCv); matrixCv = null;
+      fxActive = false;
+      if (typeof lastActivity !== 'undefined') lastActivity = Date.now();   // don't instantly re-trigger
+      setTimeout(() => { if (!poweredOff) input.focus(); }, 0);
+    };
+    const startMatrix = () => {
+      if (fxActive || poweredOff || vimActive) return;
+      fxActive = true;
+      const cv = document.createElement('canvas');
+      matrixCv = cv;
+      cv.style.cssText = 'position:fixed; inset:0; z-index:25; background:#000; cursor:none;';
+      document.body.appendChild(cv);
+      const ctx = cv.getContext('2d');
+      const fontSize = Math.max(12, Math.round(innerWidth / 90));
+      let cols, drops;
+      matrixResize = () => {
+        cv.width = innerWidth; cv.height = innerHeight;
+        cols = Math.ceil(cv.width / fontSize);
+        drops = new Array(cols).fill(0).map(() => Math.floor(Math.random() * -60));
+      };
+      matrixResize();
+      window.addEventListener('resize', matrixResize);
+      const glyphs = 'アァカサタナハマヤラワabcdefABCDEF0123456789@#$%&*<>=/\\|';
+      const draw = () => {
+        ctx.fillStyle = 'rgba(0,0,0,0.07)';
+        ctx.fillRect(0, 0, cv.width, cv.height);
+        ctx.font = fontSize + "px 'JetBrains Mono', monospace";
+        for (let i = 0; i < cols; i++) {
+          const ch = glyphs.charAt(Math.floor(Math.random() * glyphs.length));
+          const x = i * fontSize, y = drops[i] * fontSize;
+          ctx.fillStyle = '#c9ffd0'; ctx.fillText(ch, x, y);
+          ctx.fillStyle = '#28d65a'; ctx.fillText(ch, x, y - fontSize);
+          if (y > cv.height && Math.random() > 0.975) drops[i] = 0;
+          drops[i]++;
+        }
+        matrixRAF = requestAnimationFrame(draw);
+      };
+      draw();
+      const off = (e) => { e.preventDefault(); e.stopPropagation(); window.removeEventListener('keydown', off, true); window.removeEventListener('mousedown', off, true); stopMatrix(); };
+      setTimeout(() => { window.addEventListener('keydown', off, true); window.addEventListener('mousedown', off, true); }, 60);
+    };
+    self._stopMatrix = stopMatrix;
+
+    // ---- sl: a steam locomotive chugs across when you fat-finger `ls` ----
+    const TRAIN = [
+      "      ====        ________                ___________ ",
+      "  _D _|  |_______/        \\__I_I_____===__|_________| ",
+      "   |(_)---  |   H\\________/ |   |        =|___ ___|   ",
+      "   /     |  |   H  |  |     |   |         ||_| |_||    ",
+      "  |      |  |   H  |__--------------------| [___] |    ",
+      "  | ________|___H__/__|_____/[][]~\\_______|       |    ",
+      "  |/ |   |-----------I_____I [][] []  D   |=======|__  ",
+      "__/ =| o |=-~~\\  /~~\\  /~~\\  /~~\\ ____Y___________|__  ",
+      " |/-=|___|=O=====O=====O=====O   |_____/~\\___/        ",
+      "  \\_/      \\__/  \\__/  \\__/  \\__/      \\_/            "
+    ];
+    const cmdSl = () => {
+      const wrap = document.createElement('div');
+      wrap.style.cssText = 'position:relative; overflow:hidden; width:100%; height:' + (TRAIN.length * 1.2) + 'em;';
+      const pre = document.createElement('div');
+      pre.style.cssText = 'position:absolute; top:0; left:0; white-space:pre; color:' + C.exec + '; will-change:transform;';
+      pre.textContent = TRAIN.join('\n');
+      wrap.appendChild(pre); printEl(wrap);
+      const wrapW = wrap.clientWidth || innerWidth, preW = pre.scrollWidth || 600;
+      pre.style.transform = 'translateX(' + wrapW + 'px)';
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        pre.style.transition = 'transform 3s linear';
+        pre.style.transform = 'translateX(' + (-preW - 20) + 'px)';
+      }));
+      setTimeout(() => { if (wrap.parentNode) wrap.parentNode.removeChild(wrap); }, 3300);
+    };
+
+    // ---- exit / logout: CRT power-off, then "press any key to wake" ----
+    const cmdPowerOff = () => {
+      poweredOff = true;
+      const ov = document.createElement('div');
+      ov.style.cssText = 'position:fixed; inset:0; z-index:40; background:#000; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2.5em;';
+      const line = document.createElement('div');
+      line.style.cssText = 'width:78%; height:3px; background:#f3e9d6; box-shadow:0 0 22px 5px rgba(243,233,214,0.85); transition:width 0.45s ease, height 0.25s ease 0.45s, opacity 0.3s ease 0.7s; border-radius:2px;';
+      ov.appendChild(line);
+      document.body.appendChild(ov);
+      requestAnimationFrame(() => { line.style.width = '3px'; });
+      setTimeout(() => { line.style.height = '3px'; line.style.borderRadius = '50%'; }, 460);
+      setTimeout(() => { line.style.opacity = '0'; }, 740);
+      setTimeout(() => {
+        const msg = document.createElement('div');
+        msg.style.cssText = 'color:#6f675b; font-family:inherit; font-size:13px; letter-spacing:0.08em; opacity:0; transition:opacity 1.2s ease;';
+        msg.textContent = 'click. the tube cools.  — press any key to wake —';
+        ov.appendChild(msg);
+        requestAnimationFrame(() => { msg.style.opacity = '1'; });
+      }, 1050);
+      const wake = (e) => { e.preventDefault(); window.removeEventListener('keydown', wake, true); window.removeEventListener('mousedown', wake, true); location.reload(); };
+      setTimeout(() => { window.addEventListener('keydown', wake, true); window.addEventListener('mousedown', wake, true); }, 1150);
+    };
+
+    // ---- sudo / su: become root, unlock /root ----
+    const becomeRoot = () => {
+      if (rootMode) { printText('you are already root. (the power suits you.)', C.dim); return; }
+      rootMode = true;
+      printText('', C.dim);
+      printText('  # root shell granted. with great power comes great cd /root.', C.exec);
+      printText('  (type "exit" to drop back to marcus)', C.dim);
+    };
+    const cmdSudo = (argv) => {
+      const sub = argv.slice(1);
+      if (sub[0] === 'su' || sub[0] === '-s' || sub[0] === '-i' || (sub[0] === '-' && sub[1] === undefined)) { becomeRoot(); return; }
+      if (sub[0] === 'make' && sub[1] === 'me' && sub[2] === 'a' && sub[3] === 'sandwich') { printText('okay. *makes you a sandwich*  🥪  (you said the magic word.)', C.exec); return; }
+      if (!sub.length) { printText('usage: sudo <command>', C.err); return; }
+      printText('[sudo] password for marcus: ', C.text);
+      printText('marcus is not in the sudoers file.  This incident has been reported.', C.err);
+    };
+
+    // ---- man: tiny fake manual pages ----
+    const MAN = {
+      ls: 'NAME\n     ls -- list directory contents\nSYNOPSIS\n     ls [-a] [-l] [file ...]',
+      cd: 'NAME\n     cd -- change the working directory\nSYNOPSIS\n     cd [dir]',
+      vim: "NAME\n     vim -- Vi IMproved, a programmer's text editor\nNOTES\n     You can check in, but to leave: press Esc, then type  :q!",
+      sudo: 'NAME\n     sudo -- execute a command as the superuser\nNOTES\n     ...if only you were in the sudoers file.',
+      rm: "NAME\n     rm -- remove files\nWARNING\n     `rm -rf /` is not a productivity tip.",
+      neofetch: 'NAME\n     neofetch -- show system (and human) information in style',
+      man: 'NAME\n     man -- you are here. very meta.'
+    };
+    const cmdMan = (args) => {
+      const t = args.filter((a) => a.charAt(0) !== '-')[0];
+      if (!t) { printText('What manual page do you want?', C.text); return; }
+      if (t === 'woman') { printText('man: no manual entry for woman. (equal and opposite, surely.)', C.err); return; }
+      const m = MAN[t];
+      if (!m) { printText('No manual entry for ' + t, C.err); return; }
+      m.split('\n').forEach((l) => printText(l, /^[A-Z]/.test(l) ? C.user : C.text));
+    };
+
+    // ---- neofetch: "about me" rendered as system stats ----
+    const cmdNeofetch = () => {
+      const logo = [
+        "        .--------.       ",
+        "       / .------. \\      ",
+        "      / /        \\ \\     ",
+        "      | |  m  c   | |    ",
+        "      | |        | |     ",
+        "      | '--------' |     ",
+        "      '--..____..--'     ",
+        "       |          |      ",
+        "    ___|__________|___   ",
+        "   /__________________\\  "
+      ];
+      const info = [
+        [],
+        [['marcus', C.user, true], ['@', C.punct], ['home', C.user, true]],
+        [['─────────────────', C.dim]],
+        [['OS', C.user], [': HumanOS 30.x (rolling)', C.text]],
+        [['Host', C.user], [': planet earth, mostly', C.text]],
+        [['Shell', C.user], [': zsh + far too much vim', C.text]],
+        [['Editor', C.user], [': vim (yes, I can exit it)', C.text]],
+        [['Langs', C.user], [': JS · Go · Python · whatever ships', C.text]],
+        [['Uptime', C.user], [': ~30 years, few crashes', C.text]],
+        [['Coffee', C.user], [': ', C.text], ['████████░░', C.exec], [' 80%', C.text]],
+        [['Contact', C.user], [': marcuschiu9@gmail.com', C.link]]
+      ];
+      const rows = Math.max(logo.length, info.length);
+      for (let i = 0; i < rows; i++) {
+        const row = lineEl();
+        row.appendChild(span((logo[i] || '').padEnd(25), C.exec));
+        (info[i] || []).forEach((seg) => row.appendChild(span(seg[0], seg[1], seg[2] ? { fontWeight: '700' } : undefined)));
+        printEl(row);
+      }
+    };
+
+    // ---- git log: a life/career as commit history ----
+    const COMMITS = [
+      ['8c1f2a9', 'HEAD -> main, origin/main', 'Fri Jun 13 2026', 'feat: keep shipping things worth being proud of'],
+      ['3b7d004', '', 'Q2 2025', 'perf: bigger systems, calmer on-call'],
+      ['a90f5e1', '', '2023', 'feat(career): joined a team that builds genuinely cool stuff'],
+      ['1de44c7', '', '2019', 'refactor: turned curiosity into a profession'],
+      ['0000000', 'tag: v0.0.0', 'long ago', 'init: hello, world']
+    ];
+    const cmdGitLog = () => {
+      COMMITS.forEach((c, i) => {
+        if (i > 0) printText('', C.dim);
+        const head = lineEl();
+        head.appendChild(span('commit ' + c[0] + '0'.repeat(33), C.user));
+        if (c[1]) head.appendChild(span(' (' + c[1] + ')', C.exec));
+        printEl(head);
+        printText('Author: Marcus Chiu <marcuschiu9@gmail.com>', C.dim);
+        printText('Date:   ' + c[2], C.dim);
+        printText('', C.dim);
+        printText('    ' + c[3], C.text);
+      });
+    };
+    const cmdGit = (args) => {
+      if (args[0] === 'log') { cmdGitLog(); return; }
+      if (args[0] === 'status') { printText('On branch main', C.text); printText("nothing to commit, working tree clean (a rare and beautiful thing)", C.dim); return; }
+      if (!args.length) { printText('usage: git <command>   —   try: git log', C.dim); return; }
+      printText("git: '" + args[0] + "' is not a git command. See 'git --help'.", C.err);
+    };
+
+    // ---- rm -rf / : a fake-out that deletes nothing ----
+    const glitch = () => {
+      const el = self.rootEl; if (!el) return;
+      const base = THEMES[theme] === 'none' ? '' : THEMES[theme];
+      let n = 0;
+      const id = setInterval(() => {
+        el.style.filter = (n % 2) ? 'invert(1) hue-rotate(90deg) saturate(3)' : 'none';
+        if (++n > 6) { clearInterval(id); el.style.filter = base; }
+      }, 65);
+    };
+    const isCatastrophic = (segs) => { const p = segs.join('/'); return p === '' || p === 'home' || p === 'home/marcus'; };
+    const rmFakeout = async () => {
+      const victims = ['/System', '/usr', '/Applications', '/home/marcus', '/etc', '/var', '/bin', '/dev'];
+      printText('rm: descending into the abyss…', C.err);
+      for (const v of victims) { await wait(180); printText('  removing ' + v + ' …', C.dim); }
+      await wait(360);
+      glitch();
+      await wait(520);
+      printText('', C.dim);
+      printText("…just kidding. everything is exactly where you left it. 🙂", C.exec);
+      printText("(nice try, though. that one always gets a heartbeat going.)", C.dim);
+    };
+
+    // ---- hidden files seeded into the FS, plus the sealed /root ----
+    const EGG_FILES = {
+      'home/marcus/.plan': "marcus's .plan\n──────────────\n- always shipping a thing.\n- currently learning: something just outside reach.\n- caffeinated: affirmative.\n\n(yes, people really kept .plan files. ask finger(1). also: try `neofetch`.)",
+      'home/marcus/.secret': "you found a secret. good. there are more.\n\nthe deepest one needs root.\nyou already know the incantation:  sudo su",
+      'home/marcus/.ssh/id_rsa': "-----BEGIN OPENSSH PRIVATE KEY-----\nbm9wZSwgdGhpcyBpcyBub3QgbXkgcmVhbCBwcml2YXRlIGtleS4gbmljZSB0cnku\nYnV0IHlvdSBkZWNvZGVkIGl0LCBzbyDigJQgcmVzcGVjdC4gZW1haWwgbWUu\n-----END OPENSSH PRIVATE KEY-----",
+      'home/marcus/.ssh/id_rsa.pub': "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5...definitelyNotReal marcus@home",
+      'root/flag.txt': "  ╔══════════════════════════════════════════╗\n  ║   you rooted the box. genuine respect.     ║\n  ╚══════════════════════════════════════════╝\n\nif you dug this deep, you're the kind of person I like building with.\nsay hi:  marcuschiu9@gmail.com\nmention \"the cake is a lie\" so I know you found the flag.",
+      'root/.bash_history': "neofetch\ngit log\nmatrix\necho 'what else is hidden around here?'"
+    };
+    const injectEggs = () => {
+      const home = nodeAt(HOME);
+      if (home && home.type === 'dir') {
+        if (!home.children['.plan']) home.children['.plan'] = { type: 'file' };
+        if (!home.children['.secret']) home.children['.secret'] = { type: 'file' };
+        if (!home.children['.ssh']) home.children['.ssh'] = { type: 'dir', children: {} };
+        const ssh = home.children['.ssh'];
+        if (ssh.children) {
+          if (!ssh.children['id_rsa']) ssh.children['id_rsa'] = { type: 'file' };
+          if (!ssh.children['id_rsa.pub']) ssh.children['id_rsa.pub'] = { type: 'file' };
+        }
+      }
+      if (!ROOT.children['root']) ROOT.children['root'] = { type: 'dir', children: {}, sealed: true };
+      const r = ROOT.children['root'];
+      if (r.children) {
+        if (!r.children['flag.txt']) r.children['flag.txt'] = { type: 'file' };
+        if (!r.children['.bash_history']) r.children['.bash_history'] = { type: 'file' };
+      }
+    };
+    // /root is off-limits until you become root
+    const sealed = (segs) => segs[0] === 'root' && !rootMode;
+
     const execute = async (raw) => {
       const line = raw.trim();
       if (line === '') return;
@@ -927,14 +1217,31 @@ class Component extends DCLogic {
       if (cmd.indexOf('./') === 0 || cmd === 'sh' || cmd === 'bash' || cmd === 'open') { runScript(cmd, argv); return; }
       switch (cmd) {
         case 'help': cmdHelp(); return;
-        case 'whoami': printText('marcus', C.text); return;
+        case 'whoami': printText(rootMode ? 'root' : 'marcus', C.text); return;
         case 'pwd': printText('/' + cwd.join('/'), C.text); return;
         case 'ls': cmdLs(argv.slice(1)); return;
         case 'cd': cmdCd(argv[1]); return;
         case 'cat': await cmdCat(argv.slice(1)); return;
         case 'vim': case 'vi': case 'nvim': await cmdVim(argv.slice(1)); return;
-        case 'rm': cmdRm(argv.slice(1)); return;
+        case 'rm': await cmdRm(argv.slice(1)); return;
         case 'mkdir': cmdMkdir(argv.slice(1)); return;
+        // ---- hidden easter-egg commands ----
+        case 'sudo': cmdSudo(argv); return;
+        case 'su': becomeRoot(); return;
+        case 'exit': case 'logout':
+          if (rootMode) { rootMode = false; if (cwd[0] === 'root') cwd = HOME.slice(); printText('logout', C.dim); printText('back to marcus.', C.dim); return; }
+          cmdPowerOff(); return;
+        case 'sl': cmdSl(); return;
+        case 'man': cmdMan(argv.slice(1)); return;
+        case 'neofetch': case 'screenfetch': cmdNeofetch(); return;
+        case 'git': cmdGit(argv.slice(1)); return;
+        case 'matrix': case 'cmatrix': startMatrix(); return;
+        case 'theme': cmdTheme(argv.slice(1)); return;
+        case 'nano': case 'pico': printText('nano? in this house we use vim.', C.err); return;
+        case 'emacs': printText('emacs: a great operating system, lacking only a decent editor. (try vim.)', C.dim); return;
+        case '42': printText('the answer to life, the universe, and everything.', C.exec); return;
+        case 'cake': printText('the cake is a lie.', C.err); return;
+        case 'coffee': case 'brew': printText("HTTP 418: I'm a teapot.  ☕  (cannot brew coffee.)", C.text); return;
         case 'clear': out.innerHTML = ''; return;
         case 'uname': printText(argv.indexOf('-a') >= 0 ? 'Darwin home 23.5.0 arm64' : 'Darwin', C.text); return;
         case 'history': history.forEach((h, idx) => {
@@ -995,6 +1302,8 @@ class Component extends DCLogic {
     input.addEventListener('input', renderInput);
     input.addEventListener('keydown', (e) => {
       if (vimActive) return;                 // the editor owns the keyboard
+      if (poweredOff) { e.preventDefault(); return; }   // its own wake handler reloads
+      if (fxActive) { e.preventDefault(); return; }      // matrix dismiss handles it
       if (booting) { e.preventDefault(); finishBoot(); return; }
       if (!interactive) { e.preventDefault(); return; }
       if (e.key === 'Enter') {
@@ -1108,7 +1417,15 @@ class Component extends DCLogic {
       await loadManifest();
       loadOverlay();      // layer the visitor's vim/mkdir creations on top
       applyOverlay();
+      injectEggs();       // seed hidden files + the sealed /root
+      setTheme(theme);    // restore saved CRT phosphor colour
       await loadReadme();
+      // ~1 in 16 loads: a brief fake POST before the login line
+      if (!skipTyping && Math.random() < 0.06) {
+        printText('CRT-BIOS v3.07  ·  POST  ·  64K RAM OK  ·  cassette interface ready', C.dim);
+        printText('booting ttys001 …', C.dim);
+        printText('', C.dim);
+      }
       printText(loginLine, C.dim);
       printText('', C.dim);
       if (skipTyping) { renderBooted(); return; }
@@ -1134,6 +1451,37 @@ class Component extends DCLogic {
     this._bootSkipKey = (e) => { if (booting) { finishBoot(); e.preventDefault(); e.stopPropagation(); } };
     window.addEventListener('keydown', this._bootSkipKey, true);
 
+    // ---- Konami code: ↑↑↓↓←→←→ B A  →  toggle green-phosphor mode ----
+    const KONAMI = ['arrowup', 'arrowup', 'arrowdown', 'arrowdown', 'arrowleft', 'arrowright', 'arrowleft', 'arrowright', 'b', 'a'];
+    let kIdx = 0;
+    this._konami = (e) => {
+      if (vimActive || fxActive || poweredOff) return;
+      const k = e.key.toLowerCase();
+      if (k === KONAMI[kIdx]) {
+        if (++kIdx === KONAMI.length) {
+          kIdx = 0;
+          setTheme(theme === 'green' ? 'amber' : 'green');
+          if (interactive) printText('↑↑↓↓←→←→ B A  —  phosphor: ' + theme, C.exec);
+        }
+      } else { kIdx = (k === KONAMI[0]) ? 1 : 0; }
+    };
+    window.addEventListener('keydown', this._konami, true);
+
+    // ---- idle screensaver: matrix rain after a minute of stillness ----
+    let lastActivity = Date.now();
+    const bump = () => { lastActivity = Date.now(); };
+    ['keydown', 'mousedown', 'pointermove', 'wheel', 'touchstart'].forEach((ev) => window.addEventListener(ev, bump, { passive: true }));
+    this._idleInt = setInterval(() => {
+      if (Date.now() - lastActivity > 60000 && !vimActive && !fxActive && !booting && !poweredOff) startMatrix();
+    }, 5000);
+
+    // ---- a wink for anyone who opens DevTools ----
+    try {
+      console.log('%c  marcus@home  ', 'background:#15110b; color:#e7ad4d; font-weight:700; font-size:16px; padding:6px 10px; border-radius:4px;');
+      console.log('%cyou opened the console. respect.\nnot every command shows up in `help`. start with: %cls -a%c, then think like it is 1995.\n(try: neofetch · sl · matrix · sudo su · the Konami code)',
+        'color:#c2b9a9; font-size:12px;', 'color:#a7b76e; font-weight:700;', 'color:#6f675b; font-size:12px;');
+    } catch (e) {}
+
     // ---- cursor-following warm glow ----
     let raf = null, tx = innerWidth * 0.6, ty = innerHeight * 0.26;
     const apply = () => {
@@ -1147,7 +1495,10 @@ class Component extends DCLogic {
   componentWillUnmount() {
     if (this._move) window.removeEventListener('pointermove', this._move);
     if (this._bootSkipKey) window.removeEventListener('keydown', this._bootSkipKey, true);
+    if (this._konami) window.removeEventListener('keydown', this._konami, true);
     if (this._copy) document.removeEventListener('copy', this._copy);
+    if (this._idleInt) clearInterval(this._idleInt);
+    if (this._stopMatrix) this._stopMatrix();
     if (this._t) clearTimeout(this._t);
   }
 
