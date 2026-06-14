@@ -210,7 +210,7 @@ class Component extends DCLogic {
       return d;
     };
     const scroll = () => { screen.scrollTop = screen.scrollHeight; };
-    let promptLine = null, cmdSpan = null, interactive = false, booting = false, vimActive = false;
+    let promptLine = null, cmdSpan = null, tailSpan = null, interactive = false, booting = false, vimActive = false;
     let rootMode = false, poweredOff = false;   // sudo su / exit easter eggs
     const printEl = (el) => {
       if (promptLine && promptLine.parentNode === out) out.insertBefore(el, promptLine);
@@ -242,23 +242,48 @@ class Component extends DCLogic {
     // seed a "previous session" — a breadcrumb trail for the curious (↑ / history)
     ['ls -a', 'cat .plan', 'neofetch'].forEach((h) => history.push(h));
     let histIdx = 0;
-    const renderInput = () => { if (cmdSpan) cmdSpan.textContent = input.value; };
+    // restore the plain block-caret look (used by the boot/typing animations)
+    const resetCaret = () => { caret.textContent = '█'; caret.style.color = C.user; caret.style.background = 'transparent'; };
+    // render the line so the block caret sits on the real cursor (input.selectionStart),
+    // not always at the end — so arrow keys / Home / End visibly move it
+    const renderInput = () => {
+      if (!cmdSpan) return;
+      const v = input.value;
+      let pos = input.selectionStart;
+      if (pos == null || pos < 0 || pos > v.length) pos = v.length;
+      cmdSpan.textContent = v.slice(0, pos);
+      const under = v.charAt(pos);              // '' when the cursor is past the last char
+      if (under) {                              // block highlights the character beneath it
+        caret.textContent = under;
+        caret.style.color = '#15110b';
+        caret.style.background = C.user;
+      } else {
+        resetCaret();
+      }
+      if (tailSpan) tailSpan.textContent = under ? v.slice(pos + 1) : '';
+    };
     const showPrompt = () => {
       promptLine = lineEl();
       promptLine.appendChild(promptPrefix());
       cmdSpan = span('', C.text);
       promptLine.appendChild(cmdSpan);
+      resetCaret();
       promptLine.appendChild(caret);
+      tailSpan = span('', C.text);
+      promptLine.appendChild(tailSpan);
       out.appendChild(promptLine);
       interactive = true;
       input.value = '';
+      renderInput();
       histIdx = history.length;
       scroll();
       input.focus();
     };
     const commitPrompt = (cmd) => {
       if (caret.parentNode) caret.parentNode.removeChild(caret);
+      resetCaret();
       if (cmdSpan) cmdSpan.textContent = cmd;
+      if (tailSpan) tailSpan.textContent = '';
       interactive = false;
       promptLine = null;
     };
@@ -1300,6 +1325,8 @@ class Component extends DCLogic {
 
     // ---- key handling ----
     input.addEventListener('input', renderInput);
+    // catch cursor moves that don't change the value (arrows, Home/End, word-jumps, selection)
+    input.addEventListener('keyup', () => { if (interactive) renderInput(); });
     input.addEventListener('keydown', (e) => {
       if (vimActive) return;                 // the editor owns the keyboard
       if (poweredOff) { e.preventDefault(); return; }   // its own wake handler reloads
@@ -1319,6 +1346,9 @@ class Component extends DCLogic {
       } else if (e.key === 'ArrowDown') {
         e.preventDefault();
         histIdx = Math.min(history.length, histIdx + 1); input.value = history[histIdx] || ''; renderInput();
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'Home' || e.key === 'End') {
+        // let the hidden input move its own cursor, then sync the visible caret (also covers key-repeat)
+        setTimeout(renderInput, 0);
       } else if (e.key === 'l' && e.ctrlKey) {
         e.preventDefault();
         const v = input.value; out.innerHTML = ''; promptLine = null; showPrompt(); input.value = v; renderInput();
