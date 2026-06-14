@@ -76,6 +76,36 @@ Try these in the live terminal — none of them appear in `help`:
 
 <!-- the flag itself isn't in this repo. it lives where only root can read it. you're close. -->
 
+## Easter eggs implemented
+
+**Hidden commands** (none appear in `help` or Tab-complete — discovery is the point):
+
+- `sudo` → "not in the sudoers file. This incident has been reported." (`sudo make me a sandwich` works, though)
+- `sudo su` / `su` → root mode: prompt turns red `root@home:~#`, `whoami` says `root`, unlocks the sealed `/root` dir
+- `exit` / `logout` → CRT power-off animation (collapses to a dot) → "press any key to wake"; from root it just drops you back to marcus
+- `sl` → ASCII steam locomotive chugs across the screen
+- `man <cmd>` → tiny fake manual pages; `man woman` gag
+- `neofetch` / `screenfetch` → about-me as system stats with an ASCII logo
+- `git log` → your career as commit history; `git status` too
+- `matrix` / `cmatrix` → green digital rain (any key dismisses)
+- `theme [amber|green|blue|mono]` → swap CRT phosphor color (persists)
+- `nano`/`emacs` (editor-war jabs), `42`, `cake`, `coffee`/`brew` (HTTP 418)
+
+**Triggers & effects:**
+
+- Konami code (↑↑↓↓←→←→ B A) → toggles green-phosphor mode
+- Idle screensaver → matrix rain after 60s of stillness
+- `rm -rf /` (and `~`, `.`) → dramatic fake deletion + screen glitch, then "just kidding" — deletes nothing
+
+**Hidden files** (built-in, can't be `rm`'d; surfaced via `ls -a`):
+
+- `~/.plan` (Unix finger tradition), `~/.secret`, `~/.ssh/id_rsa` (joke key — base64 decodes to a wink)
+- `/root/flag.txt` (the reward: contact + "the cake is a lie" passphrase) and `/root/.bash_history`
+
+**The breadcrumb trail (ARG):** DevTools `console.log` wink + an HTML source comment → both point to `ls -a` → `.secret` → `sudo su` → `/root/flag.txt`. Command history is also pre-seeded (`ls -a`, `cat .plan`, `neofetch`) so ↑/history nudge the curious.
+
+**Plus:** ~1-in-16 loads show a brief fake BIOS/POST before login.
+
 ## elsewhere
 
 [github](https://github.com/TheRealMarcusChiu) · [linktree](https://linktr.ee/marcuschiu) · [email](mailto:marcuschiu9@gmail.com)
