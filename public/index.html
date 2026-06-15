@@ -27,6 +27,14 @@
     ::selection { background: rgba(231,173,77,0.22); color: #f3e9d6; }
     @keyframes blink { 0%,49% { opacity: 1; } 50%,100% { opacity: 0; } }
     @keyframes haze  { 0%,100% { transform: translate3d(0,0,0) scale(1); } 50% { transform: translate3d(2%,-1.5%,0) scale(1.08); } }
+    @keyframes mc-degauss {
+      0%   { filter: none; transform: none; }
+      12%  { filter: hue-rotate(45deg) saturate(3) brightness(1.5) contrast(1.3); transform: scale(1.012) skewX(0.7deg); }
+      32%  { filter: hue-rotate(-35deg) saturate(2.4) brightness(1.25); transform: scale(0.996) skewX(-0.5deg); }
+      55%  { filter: hue-rotate(18deg) saturate(1.7) brightness(1.1); transform: scale(1.004) skewX(0.25deg); }
+      78%  { filter: hue-rotate(-8deg) saturate(1.25) brightness(1.04); transform: scale(0.999); }
+      100% { filter: none; transform: none; }
+    }
     .scr::-webkit-scrollbar { width: 10px; }
     .scr::-webkit-scrollbar-thumb { background: rgba(231,173,77,0.14); border-radius: 10px; }
     .scr::-webkit-scrollbar-track { background: transparent; }
@@ -424,10 +432,15 @@ class Component extends DCLogic {
     const cmdCat = async (args) => {
       if (args.length === 0) { printText('cat: missing file operand', C.err); return; }
       for (const a of args) {
+        if (/(^|\/)index\.html$/.test(a)) { printText("you're soaking in it.", C.exec); continue; }
         const segs = resolve(a);
         if (sealed(segs)) { printText('cat: ' + a + ': Permission denied', C.err); continue; }
         const node = nodeAt(segs);
         if (!node) { printText('cat: ' + a + ': No such file or directory', C.err); continue; }
+        const ck = pathKey(segs);   // stamp achievements for the secret files
+        if (ck === 'root/flag.txt') unlock('flag');
+        else if (ck === 'home/marcus/.secret') unlock('secret');
+        else if (ck === 'home/marcus/.ssh/id_rsa') unlock('idrsa');
         if (node.type === 'dir') { printText('cat: ' + a + ': Is a directory', C.err); continue; }
         if (node.type === 'readme') { if (!README.length) await loadReadme(); renderReadme(); continue; }
         // file + exec: overlay content if edited, else the real bytes from ./root
@@ -1058,7 +1071,7 @@ class Component extends DCLogic {
 
     // ---- exit / logout: CRT power-off, then "press any key to wake" ----
     const cmdPowerOff = () => {
-      poweredOff = true;
+      poweredOff = true; unlock('poweroff');
       const ov = document.createElement('div');
       ov.style.cssText = 'position:fixed; inset:0; z-index:40; background:#000; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2.5em;';
       const line = document.createElement('div');
@@ -1082,12 +1095,13 @@ class Component extends DCLogic {
     // ---- sudo / su: become root, unlock /root ----
     const becomeRoot = () => {
       if (rootMode) { printText('you are already root. (the power suits you.)', C.dim); return; }
-      rootMode = true;
+      rootMode = true; unlock('root');
       printText('', C.dim);
       printText('  # root shell granted. with great power comes great cd /root.', C.exec);
       printText('  (type "exit" to drop back to marcus)', C.dim);
     };
     const cmdSudo = (argv) => {
+      unlock('sudo');
       const sub = argv.slice(1);
       if (sub[0] === 'su' || sub[0] === '-s' || sub[0] === '-i' || (sub[0] === '-' && sub[1] === undefined)) { becomeRoot(); return; }
       if (sub[0] === 'make' && sub[1] === 'me' && sub[2] === 'a' && sub[3] === 'sandwich') { printText('okay. *makes you a sandwich*  🥪  (you said the magic word.)', C.exec); return; }
@@ -1104,7 +1118,8 @@ class Component extends DCLogic {
       sudo: 'NAME\n     sudo -- execute a command as the superuser\nNOTES\n     ...if only you were in the sudoers file.',
       rm: "NAME\n     rm -- remove files\nWARNING\n     `rm -rf /` is not a productivity tip.",
       neofetch: 'NAME\n     neofetch -- show system (and human) information in style',
-      man: 'NAME\n     man -- you are here. very meta.'
+      man: 'NAME\n     man -- you are here. very meta.',
+      marcus: 'NAME\n     marcus -- software person, present tense\nSYNOPSIS\n     marcus [--coffee] [--vim]\nDESCRIPTION\n     builds systems; trains mind and body; hoards quotes.\n     reach: marcuschiu9@gmail.com'
     };
     const cmdMan = (args) => {
       const t = args.filter((a) => a.charAt(0) !== '-')[0];
@@ -1160,6 +1175,7 @@ class Component extends DCLogic {
       ['0000000', 'tag: v0.0.0', 'long ago', 'init: hello, world']
     ];
     const cmdGitLog = () => {
+      unlock('gitlog');
       COMMITS.forEach((c, i) => {
         if (i > 0) printText('', C.dim);
         const head = lineEl();
@@ -1191,6 +1207,7 @@ class Component extends DCLogic {
     };
     const isCatastrophic = (segs) => { const p = segs.join('/'); return p === '' || p === 'home' || p === 'home/marcus'; };
     const rmFakeout = async () => {
+      unlock('rmrf');
       const victims = ['/System', '/usr', '/Applications', '/home/marcus', '/etc', '/var', '/bin', '/dev'];
       printText('rm: descending into the abyss…', C.err);
       for (const v of victims) { await wait(180); printText('  removing ' + v + ' …', C.dim); }
@@ -1206,7 +1223,7 @@ class Component extends DCLogic {
     const EGG_FILES = {
       'home/marcus/.plan': "marcus's .plan\n──────────────\n- always shipping a thing.\n- currently learning: something just outside reach.\n- caffeinated: affirmative.\n\n(yes, people really kept .plan files. ask finger(1). also: try `neofetch`.)",
       'home/marcus/.secret': "you found a secret. good. there are more.\n\nthe deepest one needs root.\nyou already know the incantation:  sudo su",
-      'home/marcus/.ssh/id_rsa': "-----BEGIN OPENSSH PRIVATE KEY-----\nbm9wZSwgdGhpcyBpcyBub3QgbXkgcmVhbCBwcml2YXRlIGtleS4gbmljZSB0cnku\nYnV0IHlvdSBkZWNvZGVkIGl0LCBzbyDigJQgcmVzcGVjdC4gZW1haWwgbWUu\n-----END OPENSSH PRIVATE KEY-----",
+      'home/marcus/.ssh/id_rsa': "-----BEGIN OPENSSH PRIVATE KEY-----\nbm90IG15IHJlYWwga2V5IOKAlCBidXQgeW91J3JlIHRob3JvdWdoLiBuZXh0LCBy\nb3QxMyB0aGlzOiAgZWhhOiBjZXJmZ3Z0cg==\n-----END OPENSSH PRIVATE KEY-----",
       'home/marcus/.ssh/id_rsa.pub': "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5...definitelyNotReal marcus@home",
       'root/flag.txt': "  ╔══════════════════════════════════════════╗\n  ║   you rooted the box. genuine respect.     ║\n  ╚══════════════════════════════════════════╝\n\nif you dug this deep, you're the kind of person I like building with.\nsay hi:  marcuschiu9@gmail.com\nmention \"the cake is a lie\" so I know you found the flag.",
       'root/.bash_history': "neofetch\ngit log\nmatrix\necho 'what else is hidden around here?'"
@@ -1233,10 +1250,359 @@ class Component extends DCLogic {
     // /root is off-limits until you become root
     const sealed = (segs) => segs[0] === 'root' && !rootMode;
 
+    const bootTime = Date.now();
+
+    // ---- clear with a fading phosphor ghost (CRT burn-in) ----
+    const clearScreen = () => {
+      if (out.children.length && typeof out.cloneNode === 'function') {
+        const ghost = document.createElement('div');
+        ghost.style.cssText = 'position:absolute; inset:0; pointer-events:none; opacity:0.45; transition:opacity 0.9s ease; z-index:5; padding:' + (screen.style.padding || '0') + ';';
+        ghost.appendChild(out.cloneNode(true));
+        screen.appendChild(ghost);
+        requestAnimationFrame(() => { ghost.style.opacity = '0'; });
+        setTimeout(() => { if (ghost.parentNode) ghost.parentNode.removeChild(ghost); }, 950);
+      }
+      out.innerHTML = '';
+    };
+
+    // ---- rare Amiga "Guru Meditation" crash before boot (~1/50) ----
+    const guruMeditation = () => new Promise((res) => {
+      const ov = document.createElement('div');
+      ov.style.cssText = 'position:fixed; inset:0; z-index:35; background:#000; display:flex; align-items:flex-end; justify-content:center; padding-bottom:9vh;';
+      const box = document.createElement('div');
+      box.style.cssText = 'border:3px solid #c0392b; color:#c0392b; font-family:inherit; font-size:14px; padding:10px 20px; text-align:center; white-space:pre; animation: blink 0.9s steps(1) infinite;';
+      box.textContent = 'Software Failure.   Press left mouse button to continue.\nGuru Meditation #00000004.0000AAC0';
+      ov.appendChild(box); document.body.appendChild(ov);
+      setTimeout(() => { if (ov.parentNode) ov.parentNode.removeChild(ov); res(); }, 1800);
+    });
+
+    // ---- achievements: a meta-game over all the other secrets ----
+    let secrets = {};
+    try { secrets = JSON.parse(localStorage.getItem('mc_secrets') || '{}') || {}; } catch (e) { secrets = {}; }
+    const ACHIEVEMENTS = [
+      ['sudo', 'tried to sudo'], ['root', 'became root'], ['flag', 'read the flag'],
+      ['poweroff', 'powered off the tube'], ['sl', 'rode the train'], ['neofetch', 'ran neofetch'],
+      ['gitlog', 'read the git log'], ['matrix', 'entered the matrix'], ['theme', 'changed the phosphor'],
+      ['konami', 'entered the Konami code'], ['rmrf', 'tried rm -rf /'], ['fortune', 'sought a fortune'],
+      ['finger', 'fingered marcus'], ['hack', 'hacked the mainframe'], ['snake', 'played snake'],
+      ['degauss', 'degaussed the tube'], ['cowsay', 'consulted the cow'], ['top', 'watched the processes'],
+      ['xyzzy', 'said the magic word'], ['dmesg', 'read the kernel log'], ['tv', 'lost the signal'],
+      ['sound', 'switched on sound'], ['wargames', 'declined to play'], ['qr', 'found the QR code'],
+      ['secret', 'found .secret'], ['idrsa', 'peeked at the key'], ['prestige', 'finished the trail']
+    ];
+    const unlock = (id) => { if (!secrets[id]) { secrets[id] = Date.now(); try { localStorage.setItem('mc_secrets', JSON.stringify(secrets)); } catch (e) {} } };
+    const cmdAchievements = () => {
+      const found = ACHIEVEMENTS.filter((a) => secrets[a[0]]).length;
+      printText('secrets found: ' + found + ' / ' + ACHIEVEMENTS.length, C.user);
+      printText('', C.dim);
+      ACHIEVEMENTS.forEach((a) => {
+        const got = !!secrets[a[0]];
+        const d = lineEl();
+        d.appendChild(span('  ' + (got ? '✓ ' : '· '), got ? C.exec : C.dim));
+        d.appendChild(span(got ? a[1] : '???', got ? C.text : C.dim));
+        printEl(d);
+      });
+      printText('', C.dim);
+      if (found === ACHIEVEMENTS.length) printText('100%. you absolute legend — email me: marcuschiu9@gmail.com', C.exec);
+    };
+
+    // ---- `eggs`: the full reveal of every hidden command ----
+    const cmdEggs = () => {
+      printText('here be dragons — everything that hides from `help`:', C.user);
+      printText('', C.dim);
+      [['root & access', ['sudo', 'su', 'sudo su', 'exit', 'logout']],
+       ['toys', ['sl', 'cowsay', 'neofetch', 'git log', 'fortune', 'finger', 'matrix', 'snake', 'hack', 'top', 'ps', 'uptime', 'df', 'dmesg', 'who']],
+       ['crt', ['theme [amber|green|blue|mono]', 'degauss', 'tv', 'sound [on|off]']],
+       ['jokes', ['man <x>', 'nano', 'emacs', 'ed', 'make love', 'xyzzy', '42', 'cake', 'coffee', 'brew install <x>', 'which <x>', 'ssh marcus@home', 'source ~/.bashrc', 'reboot', 'tic-tac-toe', 'qr']],
+       ['danger', ['rm -rf /']],
+       ['meta', ['achievements', 'eggs']]].forEach((g) => {
+        printText(g[0] + ':', C.exec);
+        const d = lineEl(); d.appendChild(span('  ' + g[1].join(' · '), C.dim)); printEl(d);
+        printText('', C.dim);
+      });
+      printText('also hidden: the Konami code, an idle screensaver, dotfiles (try ls -a), and a sealed /root.', C.dim);
+    };
+
+    // ---- audio layer (Web Audio; opt-in via `sound on`) ----
+    let soundOn = false; try { soundOn = localStorage.getItem('mc_sound') === '1'; } catch (e) {}
+    let audioCtx = null;
+    const ensureAudio = () => {
+      if (!audioCtx) { try { const AC = window.AudioContext || window.webkitAudioContext; if (AC) audioCtx = new AC(); } catch (e) {} }
+      if (audioCtx && audioCtx.state === 'suspended') { try { audioCtx.resume(); } catch (e) {} }
+      return audioCtx;
+    };
+    const blip = (freq, dur, type, vol) => {
+      const ac = ensureAudio(); if (!ac) return;
+      try {
+        const o = ac.createOscillator(), g = ac.createGain();
+        o.type = type || 'square'; o.frequency.value = freq;
+        const v = (vol == null ? 0.04 : vol);
+        o.connect(g); g.connect(ac.destination);
+        const t = ac.currentTime;
+        g.gain.setValueAtTime(v, t);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + (dur || 0.05));
+        o.start(t); o.stop(t + (dur || 0.05) + 0.02);
+      } catch (e) {}
+    };
+    const playClick = () => { if (soundOn) blip(200 + Math.random() * 140, 0.016, 'square', 0.03); };
+    const playThunk = () => { blip(120, 0.2, 'sine', 0.12); setTimeout(() => blip(72, 0.28, 'sine', 0.08), 45); };
+    const cmdSound = (args) => {
+      if (args[0] === 'off') { soundOn = false; try { localStorage.setItem('mc_sound', '0'); } catch (e) {} printText('sound: off', C.dim); return; }
+      soundOn = true; unlock('sound'); try { localStorage.setItem('mc_sound', '1'); } catch (e) {}
+      ensureAudio(); playThunk();
+      printText('sound: on — keystroke clicks + a CRT thunk. (sound off to silence)', C.exec);
+    };
+
+    // ---- fortune: pulled from the quote pile marcus keeps ----
+    const FORTUNES = [
+      '"Simplicity is prerequisite for reliability." — Dijkstra',
+      '"The unix philosophy: do one thing well." — Doug McIlroy',
+      '"Programs must be written for people to read." — Abelson & Sussman',
+      '"Make it work, make it right, make it fast." — Kent Beck',
+      '"Talk is cheap. Show me the code." — Linus Torvalds',
+      '"Discipline equals freedom." — Jocko Willink',
+      '"The body achieves what the mind believes."',
+      '"Premature optimization is the root of all evil." — Knuth',
+      '"What is measured improves."',
+      '"Stay hungry, stay foolish." — Whole Earth Catalog'
+    ];
+    const cmdFortune = () => { unlock('fortune'); printText(FORTUNES[Math.floor(Math.random() * FORTUNES.length)], C.text); };
+
+    // ---- cowsay ----
+    const cmdCowsay = (argv) => {
+      unlock('cowsay');
+      const text = argv.slice(1).join(' ') || 'moo';
+      printText(' ' + '_'.repeat(text.length + 2), C.text);
+      printText('< ' + text + ' >', C.text);
+      printText(' ' + '-'.repeat(text.length + 2), C.text);
+      ['        \\   ^__^', '         \\  (oo)\\_______', '            (__)\\       )\\/\\', '                ||----w |', '                ||     ||'].forEach((l) => printText(l, C.text));
+    };
+
+    // ---- finger: the old-school way to read someone's .plan ----
+    const cmdFinger = async (argv) => {
+      const who = argv[1] || 'marcus';
+      if (who !== 'marcus') { printText('finger: ' + who + ': no such user.', C.err); return; }
+      unlock('finger');
+      printText('Login: marcus                     Name: Marcus Chiu', C.text);
+      printText('Directory: /home/marcus           Shell: /bin/zsh', C.text);
+      printText('Plan:', C.text);
+      const t = await readFile(HOME.concat('.plan'));
+      (t || '(no plan)').replace(/\n$/, '').split('\n').forEach((l) => printText(l, C.dim));
+    };
+
+    // ---- fake system inspectors ----
+    const cmdTop = () => {
+      unlock('top');
+      printText('Processes: 42 total, 1 running, 41 daydreaming        Load: 0.42', C.dim);
+      [['1', 'marcus', '7.3', 'being_present'], ['42', 'root', '99.9', 'existential_dread'],
+       ['101', 'marcus', '12.0', 'vim'], ['256', 'marcus', '3.1', 'coffee.d'],
+       ['512', 'marcus', '5.5', 'shipping'], ['666', 'nobody', '0.0', 'side_quests']].forEach((p) => {
+        const d = lineEl();
+        d.appendChild(span(p[0].padStart(5) + '  ' + p[1].padEnd(8) + p[2].padStart(5) + '%  ', C.dim));
+        d.appendChild(span(p[3], C.text));
+        printEl(d);
+      });
+    };
+    const cmdPs = () => {
+      printText('  PID TTY          TIME CMD', C.user);
+      [['101', 'ttys001', '0:42', '-zsh'], ['256', 'ttys001', '3:14', 'vim README.txt'], ['512', 'ttys001', '0:07', 'ps']].forEach((p) => {
+        printText(p[0].padStart(5) + ' ' + p[1] + '   ' + p[2] + ' ' + p[3], C.text);
+      });
+    };
+    const cmdUptime = () => {
+      const mins = Math.floor((Date.now() - bootTime) / 60000);
+      printText(' up ' + (mins < 1 ? 'less than a minute' : mins + ' min') + ',  1 user,  load average: 0.42, 0.42, 0.42', C.text);
+    };
+    const cmdDf = () => {
+      [['Filesystem', 'Size', 'Used', 'Avail', 'Use%', 'Mounted'], ['/dev/disk1', '∞', '∞', '0', '100%', '/'],
+       ['/dev/soul', '512Z', '511Z', '1Z', '99%', '/home/marcus'], ['tmpfs', '64M', '64M', '0', '100%', '/dev/dreams']].forEach((r, i) => {
+        const cells = r[0].padEnd(12) + r[1].padStart(6) + r[2].padStart(6) + r[3].padStart(7) + r[4].padStart(6) + '  ' + r[5];
+        printText(cells, i === 0 ? C.user : C.dim);
+      });
+    };
+    const cmdWho = () => {
+      printText('marcus   ttys001   just now   (you, probably)', C.text);
+      if (rootMode) printText('root     ttys001   now        (also you)', C.dim);
+    };
+    const DMESG = [
+      '[    0.000000] CRT-BIOS: warming the cathode…',
+      '[    0.424242] phosphor: amber layer online',
+      '[    1.337000] coffee: subsystem ready',
+      '[    2.000001] vim: loaded (exit strategy: undefined)',
+      '[    3.141592] marcus: present',
+      '[   13.370000] easter_eggs: 27 mounted',
+      '[   42.000000] love: not found — retrying forever…'
+    ];
+    const cmdDmesg = () => { unlock('dmesg'); DMESG.forEach((l) => printText(l, C.dim)); };
+
+    // ---- Hollywood hacking sequence ----
+    const cmdHack = async (argv) => {
+      unlock('hack');
+      const target = argv[1] || 'the.mainframe';
+      printText('initiating breach on ' + target + ' …', C.err);
+      const steps = ['bypassing firewall', 'spoofing MAC address', 'injecting payload', 'cracking SHA-256', 'rerouting through 7 proxies', 'dumping the database'];
+      for (const s of steps) { await wait(360); const d = lineEl(); d.appendChild(span('  ' + s.padEnd(28), C.dim)); d.appendChild(span('[ OK ]', C.exec)); printEl(d); }
+      await wait(360);
+      printText('  ▓▓▓▓▓▓▓▓  ACCESS GRANTED  ▓▓▓▓▓▓▓▓', C.exec);
+      await wait(420);
+      printText('…just kidding. you watched too many movies. (so did I.)', C.dim);
+    };
+
+    // ---- degauss: the CRT colour-wobble, on demand ----
+    const degauss = () => {
+      unlock('degauss');
+      const el = self.rootEl; if (!el) return;
+      const base = THEMES[theme] === 'none' ? '' : THEMES[theme];
+      el.style.animation = 'mc-degauss 0.7s ease-out';
+      setTimeout(() => { el.style.animation = ''; el.style.filter = base; }, 740);
+    };
+
+    // ---- tv: lose the signal to static, briefly ----
+    const cmdTv = () => {
+      unlock('tv');
+      if (poweredOff) return;
+      const cv = document.createElement('canvas');
+      cv.style.cssText = 'position:fixed; inset:0; z-index:24;';
+      document.body.appendChild(cv);
+      const ctx = cv.getContext('2d');
+      cv.width = innerWidth; cv.height = innerHeight;
+      const snow = () => {
+        ctx.fillStyle = '#000'; ctx.fillRect(0, 0, cv.width, cv.height);
+        for (let i = 0; i < 1400; i++) {
+          const g = Math.floor(Math.random() * 200);
+          ctx.fillStyle = 'rgb(' + g + ',' + g + ',' + g + ')';
+          ctx.fillRect(Math.random() * cv.width, Math.random() * cv.height, 8, 4);
+        }
+      };
+      snow();
+      const id = setInterval(snow, 90);
+      setTimeout(() => {
+        clearInterval(id);
+        ctx.fillStyle = '#000'; ctx.fillRect(0, 0, cv.width, cv.height);
+        ctx.fillStyle = '#9aa886'; ctx.font = "700 " + Math.round(innerWidth / 26) + "px 'JetBrains Mono', monospace";
+        ctx.fillText('NO SIGNAL', cv.width / 2 - innerWidth / 9, cv.height / 2);
+      }, 1200);
+      setTimeout(() => { if (cv.parentNode) cv.parentNode.removeChild(cv); }, 2000);
+    };
+
+    // ---- WarGames ----
+    const cmdWargames = () => {
+      unlock('wargames');
+      printText('GREETINGS PROFESSOR FALKEN.', C.exec);
+      printText('', C.dim);
+      printText('Shall we play a game?', C.text);
+      printText('', C.dim);
+      printText('…the only winning move is not to play.', C.dim);
+    };
+
+    // ---- a (decorative) QR to the linktree ----
+    const QR = [
+      '█▀▀▀▀▀█ ▄▀ ▄ █▀▀▀▀▀█',
+      '█ ███ █ ▀█▄▀ █ ███ █',
+      '█ ▀▀▀ █ █▀▄  █ ▀▀▀ █',
+      '▀▀▀▀▀▀▀ █▄█▄▀ ▀▀▀▀▀▀▀',
+      '█▀▄ ▀█▀▄▀ ▄▀▄█▀ ▄▀▄▀▀',
+      ' ▄█▄ ▀▀█▀█▄▄ ▀▄█▄▀ ▄ ',
+      '█ ▄▀▄█▀ ▄▀█  ▀▄▀██▄▀▀',
+      '▀ ▀ ▀▀▀ █▄▀ ▄█▀▀▀█ ▄ ',
+      '█▀▀▀▀▀█ ▄ ▀▄▀█ ▀ █▄█▀',
+      '█ ███ █ █▄▀▄▄▀███▀▄ ▄',
+      '█ ▀▀▀ █ ▀ ▄█▄ ▄▀▄▀▄▀▀',
+      '▀▀▀▀▀▀▀ ▀▀  ▀▀▀ ▀ ▀▀▀'
+    ];
+    const cmdQr = () => { unlock('qr'); QR.forEach((l) => printText(l, C.text)); printText('→ https://linktr.ee/marcuschiu', C.link); };
+
+    // ---- prestige: the end of the cipher trail ----
+    const cmdPrestige = () => {
+      unlock('prestige');
+      ['  ╔══════════════════════════════════════════╗',
+       '  ║   you solved the whole trail. bravo.       ║',
+       '  ╚══════════════════════════════════════════╝',
+       '',
+       'base64 → rot13 → here. that is real dedication.',
+       'if you got this far, we should genuinely talk:',
+       'marcuschiu9@gmail.com — subject: "the only winning move"'].forEach((l) => printText(l, C.exec));
+    };
+
+    // ---- snake: a real playable game on the CRT ----
+    let snakeState = null;
+    const stopGame = () => {
+      if (snakeState) {
+        clearInterval(snakeState.timer);
+        if (snakeState.off) window.removeEventListener('keydown', snakeState.off, true);
+        if (snakeState.cv && snakeState.cv.parentNode) snakeState.cv.parentNode.removeChild(snakeState.cv);
+        snakeState = null;
+      }
+      fxActive = false;
+      if (typeof lastActivity !== 'undefined') lastActivity = Date.now();
+      setTimeout(() => { if (!poweredOff) input.focus(); }, 0);
+    };
+    self._stopGame = stopGame;
+    const startSnake = () => {
+      if (fxActive || poweredOff || vimActive) return;
+      fxActive = true; unlock('snake');
+      const cv = document.createElement('canvas');
+      cv.style.cssText = 'position:fixed; inset:0; z-index:25; background:#0b0d0a; cursor:none;';
+      document.body.appendChild(cv);
+      const ctx = cv.getContext('2d');
+      const cell = Math.max(14, Math.round(innerWidth / 46));
+      cv.width = innerWidth; cv.height = innerHeight;
+      const cols = Math.floor(cv.width / cell), rows = Math.floor(cv.height / cell);
+      let snake, dir, nextDir, food, score, dead;
+      let hi = 0; try { hi = parseInt(localStorage.getItem('mc_snake_hi') || '0', 10) || 0; } catch (e) {}
+      const randFood = () => { let f; do { f = { x: Math.floor(Math.random() * cols), y: Math.floor(Math.random() * rows) }; } while (snake.some((s) => s.x === f.x && s.y === f.y)); return f; };
+      const reset = () => { snake = [{ x: (cols / 2) | 0, y: (rows / 2) | 0 }]; dir = { x: 1, y: 0 }; nextDir = dir; food = randFood(); score = 0; dead = false; };
+      reset();
+      const draw = () => {
+        ctx.fillStyle = '#0b0d0a'; ctx.fillRect(0, 0, cv.width, cv.height);
+        ctx.fillStyle = '#cf8f6f'; ctx.fillRect(food.x * cell + 2, food.y * cell + 2, cell - 4, cell - 4);
+        snake.forEach((s, i) => { ctx.fillStyle = i === 0 ? '#e7ad4d' : '#a7b76e'; ctx.fillRect(s.x * cell + 1, s.y * cell + 1, cell - 2, cell - 2); });
+        ctx.fillStyle = '#6f675b'; ctx.font = "600 " + Math.round(cell * 0.85) + "px 'JetBrains Mono', monospace";
+        ctx.fillText('score ' + score + '   hi ' + Math.max(hi, score) + '   ·  arrows / wasd  ·  q quits', 14, cell * 1.2);
+        if (dead) {
+          ctx.fillStyle = 'rgba(11,13,10,0.7)'; ctx.fillRect(0, 0, cv.width, cv.height);
+          ctx.fillStyle = '#e7ad4d'; ctx.font = "700 " + (cell * 1.6) + "px 'JetBrains Mono', monospace";
+          ctx.fillText('GAME OVER — ' + score, cv.width / 2 - cell * 7, cv.height / 2);
+          ctx.fillStyle = '#6f675b'; ctx.font = "400 " + cell + "px 'JetBrains Mono', monospace";
+          ctx.fillText('r to retry · q to quit', cv.width / 2 - cell * 5, cv.height / 2 + cell * 1.8);
+        }
+      };
+      const tick = () => {
+        if (dead) return;
+        dir = nextDir;
+        const head = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
+        if (head.x < 0 || head.y < 0 || head.x >= cols || head.y >= rows || snake.some((s) => s.x === head.x && s.y === head.y)) {
+          dead = true; if (score > hi) { hi = score; try { localStorage.setItem('mc_snake_hi', String(hi)); } catch (e) {} } draw(); return;
+        }
+        snake.unshift(head);
+        if (head.x === food.x && head.y === food.y) { score++; food = randFood(); } else snake.pop();
+        draw();
+      };
+      draw();
+      const timer = setInterval(tick, 110);
+      const off = (e) => {
+        const k = e.key.toLowerCase();
+        if (k === 'q' || k === 'escape') { e.preventDefault(); e.stopPropagation(); stopGame(); return; }
+        if (dead && k === 'r') { e.preventDefault(); e.stopPropagation(); reset(); draw(); return; }
+        let nd = null;
+        if (k === 'arrowup' || k === 'w') nd = { x: 0, y: -1 };
+        else if (k === 'arrowdown' || k === 's') nd = { x: 0, y: 1 };
+        else if (k === 'arrowleft' || k === 'a') nd = { x: -1, y: 0 };
+        else if (k === 'arrowright' || k === 'd') nd = { x: 1, y: 0 };
+        if (nd) { e.preventDefault(); e.stopPropagation(); if (nd.x !== -dir.x || nd.y !== -dir.y) nextDir = nd; }
+      };
+      window.addEventListener('keydown', off, true);
+      snakeState = { timer: timer, off: off, cv: cv };
+    };
+
     const execute = async (raw) => {
       const line = raw.trim();
       if (line === '') return;
+      // fork bomb — defused
+      if (line.indexOf(':(){') >= 0 || line.indexOf(':|:&') >= 0) { history.push(line); histIdx = history.length; printText('fork bomb defused. (nice try.)', C.err); return; }
       history.push(line); histIdx = history.length;
+      // !! — re-run the previous command
+      if (line === '!!') { const prev = history[history.length - 2]; if (!prev) { printText('!!: event not found', C.err); return; } printText(prev, C.dim); return execute(prev); }
       const argv = line.split(/\s+/);
       const cmd = argv[0];
       if (cmd.indexOf('./') === 0 || cmd === 'sh' || cmd === 'bash' || cmd === 'open') { runScript(cmd, argv); return; }
@@ -1256,18 +1622,51 @@ class Component extends DCLogic {
         case 'exit': case 'logout':
           if (rootMode) { rootMode = false; if (cwd[0] === 'root') cwd = HOME.slice(); printText('logout', C.dim); printText('back to marcus.', C.dim); return; }
           cmdPowerOff(); return;
-        case 'sl': cmdSl(); return;
+        case 'reboot': case 'shutdown': printText('the system is going down NOW!', C.err); await wait(450); cmdPowerOff(); return;
+        case 'sl': unlock('sl'); cmdSl(); return;
         case 'man': cmdMan(argv.slice(1)); return;
-        case 'neofetch': case 'screenfetch': cmdNeofetch(); return;
+        case 'neofetch': case 'screenfetch': unlock('neofetch'); cmdNeofetch(); return;
         case 'git': cmdGit(argv.slice(1)); return;
-        case 'matrix': case 'cmatrix': startMatrix(); return;
-        case 'theme': cmdTheme(argv.slice(1)); return;
+        case 'matrix': case 'cmatrix': unlock('matrix'); startMatrix(); return;
+        case 'theme': unlock('theme'); cmdTheme(argv.slice(1)); return;
+        case 'snake': startSnake(); return;
+        case 'fortune': cmdFortune(); return;
+        case 'cowsay': cmdCowsay(argv); return;
+        case 'finger': await cmdFinger(argv); return;
+        case 'top': case 'htop': cmdTop(); return;
+        case 'ps': cmdPs(); return;
+        case 'uptime': cmdUptime(); return;
+        case 'df': case 'du': cmdDf(); return;
+        case 'who': case 'w': cmdWho(); return;
+        case 'dmesg': case 'journalctl': cmdDmesg(); return;
+        case 'hack': await cmdHack(argv); return;
+        case 'degauss': degauss(); return;
+        case 'tv': cmdTv(); return;
+        case 'qr': cmdQr(); return;
+        case 'prestige': cmdPrestige(); return;
+        case 'sound': cmdSound(argv.slice(1)); return;
+        case 'achievements': case 'progress': cmdAchievements(); return;
+        case 'eggs': case 'secrets': cmdEggs(); return;
+        case 'tic-tac-toe': case 'ttt': case 'wargames': cmdWargames(); return;
         case 'nano': case 'pico': printText('nano? in this house we use vim.', C.err); return;
         case 'emacs': printText('emacs: a great operating system, lacking only a decent editor. (try vim.)', C.dim); return;
+        case 'ed': printText('ed is the standard text editor.', C.dim); return;
+        case 'make': printText(argv[1] === 'love' ? 'make: not war?' : 'make: *** No targets specified.  (make what?)', C.dim); return;
+        case 'xyzzy': unlock('xyzzy'); printText('Nothing happens.', C.dim); return;
+        case 'which': printText(argv[1] ? (argv[1] === 'marcus' ? '/usr/bin/marcus' : (COMMANDS.indexOf(argv[1]) >= 0 ? '/usr/bin/' + argv[1] : argv[1] + ' not found')) : 'usage: which <command>', C.text); return;
+        case 'ssh': printText("you're already home.", C.exec); return;
+        case 'source': case '.': printText('reloaded. you feel refreshed.', C.exec); return;
+        case 'brew': case 'apt': case 'apt-get': case 'npm': case 'pip': case 'pip3': case 'yum': case 'dnf': case 'install': {
+          const pkg = (argv.indexOf('install') >= 0 ? argv[argv.indexOf('install') + 1] : argv[1]) || 'something';
+          if (argv.indexOf('install') < 0 && cmd !== 'install') { printText(cmd + ': try `' + cmd + ' install <thing>`', C.dim); return; }
+          printText('==> downloading ' + pkg + ' …', C.dim);
+          printText('🍺  ' + pkg + ' installed. (it does nothing, like most things.)', C.exec);
+          return;
+        }
         case '42': printText('the answer to life, the universe, and everything.', C.exec); return;
         case 'cake': printText('the cake is a lie.', C.err); return;
-        case 'coffee': case 'brew': printText("HTTP 418: I'm a teapot.  ☕  (cannot brew coffee.)", C.text); return;
-        case 'clear': out.innerHTML = ''; return;
+        case 'coffee': printText("HTTP 418: I'm a teapot.  ☕  (cannot brew coffee.)", C.text); return;
+        case 'clear': clearScreen(); return;
         case 'uname': printText(argv.indexOf('-a') >= 0 ? 'Darwin home 23.5.0 arm64' : 'Darwin', C.text); return;
         case 'history': history.forEach((h, idx) => {
           const d = lineEl();
@@ -1331,6 +1730,7 @@ class Component extends DCLogic {
       if (vimActive) return;                 // the editor owns the keyboard
       if (poweredOff) { e.preventDefault(); return; }   // its own wake handler reloads
       if (fxActive) { e.preventDefault(); return; }      // matrix dismiss handles it
+      if (soundOn && (e.key.length === 1 || e.key === 'Backspace' || e.key === 'Enter' || e.key === 'Tab')) playClick();
       if (booting) { e.preventDefault(); finishBoot(); return; }
       if (!interactive) { e.preventDefault(); return; }
       if (e.key === 'Enter') {
@@ -1351,7 +1751,7 @@ class Component extends DCLogic {
         setTimeout(renderInput, 0);
       } else if (e.key === 'l' && e.ctrlKey) {
         e.preventDefault();
-        const v = input.value; out.innerHTML = ''; promptLine = null; showPrompt(); input.value = v; renderInput();
+        const v = input.value; clearScreen(); promptLine = null; showPrompt(); input.value = v; renderInput();
       } else if (e.key === 'c' && e.ctrlKey) {
         const sel = window.getSelection && String(window.getSelection());
         if (sel && sel.length) return;            // let the copy go through
@@ -1450,6 +1850,8 @@ class Component extends DCLogic {
       injectEggs();       // seed hidden files + the sealed /root
       setTheme(theme);    // restore saved CRT phosphor colour
       await loadReadme();
+      // ~1 in 50 loads: a brief Amiga guru-meditation crash
+      if (!skipTyping && Math.random() < 0.02) await guruMeditation();
       // ~1 in 16 loads: a brief fake POST before the login line
       if (!skipTyping && Math.random() < 0.06) {
         printText('CRT-BIOS v3.07  ·  POST  ·  64K RAM OK  ·  cassette interface ready', C.dim);
@@ -1457,7 +1859,16 @@ class Component extends DCLogic {
         printText('', C.dim);
       }
       printText(loginLine, C.dim);
+      // time-aware greeting + visit milestones
+      const hr = new Date().getHours();
+      const greet = hr < 5 ? 'still up? burning the midnight oil.' : hr < 12 ? 'good morning.' : hr < 18 ? 'good afternoon.' : hr < 22 ? 'good evening.' : 'late night, I see.';
+      let visits = 0; try { visits = (parseInt(localStorage.getItem('mc_visits') || '0', 10) || 0) + 1; localStorage.setItem('mc_visits', String(visits)); } catch (e) {}
+      printText(greet + ([5, 10, 25, 50, 100].indexOf(visits) >= 0 ? '  welcome back — visit #' + visits + '.' : ''), C.dim);
       printText('', C.dim);
+      // low battery? running on fumes (async; shows whenever it resolves)
+      if (typeof navigator !== 'undefined' && navigator.getBattery) {
+        navigator.getBattery().then((b) => { if (b && b.charging === false && b.level < 0.2) printText('⚠ battery at ' + Math.round(b.level * 100) + '% — running on fumes.', C.err); }).catch(() => {});
+      }
       if (skipTyping) { renderBooted(); return; }
       booting = true;
       promptLine = lineEl();
@@ -1484,18 +1895,39 @@ class Component extends DCLogic {
     // ---- Konami code: ↑↑↓↓←→←→ B A  →  toggle green-phosphor mode ----
     const KONAMI = ['arrowup', 'arrowup', 'arrowdown', 'arrowdown', 'arrowleft', 'arrowright', 'arrowleft', 'arrowright', 'b', 'a'];
     let kIdx = 0;
-    this._konami = (e) => {
+    const feedKonami = (k) => {
       if (vimActive || fxActive || poweredOff) return;
-      const k = e.key.toLowerCase();
       if (k === KONAMI[kIdx]) {
         if (++kIdx === KONAMI.length) {
           kIdx = 0;
-          setTheme(theme === 'green' ? 'amber' : 'green');
+          setTheme(theme === 'green' ? 'amber' : 'green'); unlock('konami');
           if (interactive) printText('↑↑↓↓←→←→ B A  —  phosphor: ' + theme, C.exec);
         }
       } else { kIdx = (k === KONAMI[0]) ? 1 : 0; }
     };
+    this._konami = (e) => feedKonami(e.key.toLowerCase());
     window.addEventListener('keydown', this._konami, true);
+
+    // the same code, but on a game controller
+    const GPMAP = { 12: 'arrowup', 13: 'arrowdown', 14: 'arrowleft', 15: 'arrowright', 1: 'b', 0: 'a' };
+    let gpRAF = null; const gpPrev = {};
+    const gpPoll = () => {
+      const pads = (typeof navigator !== 'undefined' && navigator.getGamepads) ? navigator.getGamepads() : [];
+      for (const p of pads) { if (!p) continue; p.buttons.forEach((btn, i) => { const pr = btn.pressed; if (pr && !gpPrev[i] && GPMAP[i] !== undefined) feedKonami(GPMAP[i]); gpPrev[i] = pr; }); }
+      gpRAF = requestAnimationFrame(gpPoll);
+    };
+    this._gpConn = () => { if (!gpRAF) gpRAF = requestAnimationFrame(gpPoll); };
+    this._gpCancel = () => { if (gpRAF) cancelAnimationFrame(gpRAF); gpRAF = null; };
+    window.addEventListener('gamepadconnected', this._gpConn);
+
+    // shake a phone to degauss the tube
+    let lastShake = 0;
+    this._shake = (e) => {
+      const a = e.accelerationIncludingGravity; if (!a) return;
+      const mag = Math.abs(a.x || 0) + Math.abs(a.y || 0) + Math.abs(a.z || 0);
+      if (mag > 38 && Date.now() - lastShake > 1500 && !fxActive && !poweredOff) { lastShake = Date.now(); degauss(); }
+    };
+    window.addEventListener('devicemotion', this._shake);
 
     // ---- idle screensaver: matrix rain after a minute of stillness ----
     let lastActivity = Date.now();
@@ -1508,7 +1940,7 @@ class Component extends DCLogic {
     // ---- a wink for anyone who opens DevTools ----
     try {
       console.log('%c  marcus@home  ', 'background:#15110b; color:#e7ad4d; font-weight:700; font-size:16px; padding:6px 10px; border-radius:4px;');
-      console.log('%cyou opened the console. respect.\nnot every command shows up in `help`. start with: %cls -a%c, then think like it is 1995.\n(try: neofetch · sl · matrix · sudo su · the Konami code)',
+      console.log('%cyou opened the console. respect.\nnot every command shows up in `help`. start with: %cls -a%c, then think like it is 1995.\n`eggs` lists them all · `achievements` tracks your finds · also: neofetch · sl · snake · sudo su · the Konami code',
         'color:#c2b9a9; font-size:12px;', 'color:#a7b76e; font-weight:700;', 'color:#6f675b; font-size:12px;');
     } catch (e) {}
 
@@ -1520,15 +1952,29 @@ class Component extends DCLogic {
     };
     this._move = (e) => { tx = e.clientX; ty = e.clientY; if (!raf) raf = requestAnimationFrame(apply); };
     window.addEventListener('pointermove', this._move, { passive: true });
+
+    // tilt a phone to slide the warm glow around
+    this._tilt = (e) => {
+      if (e.gamma == null) return;
+      tx = innerWidth * (0.5 + Math.max(-1, Math.min(1, e.gamma / 45)) * 0.4);
+      ty = innerHeight * (0.5 + Math.max(-1, Math.min(1, ((e.beta || 0) - 45) / 45)) * 0.3);
+      if (!raf) raf = requestAnimationFrame(apply);
+    };
+    window.addEventListener('deviceorientation', this._tilt, { passive: true });
   }
 
   componentWillUnmount() {
     if (this._move) window.removeEventListener('pointermove', this._move);
+    if (this._tilt) window.removeEventListener('deviceorientation', this._tilt);
     if (this._bootSkipKey) window.removeEventListener('keydown', this._bootSkipKey, true);
     if (this._konami) window.removeEventListener('keydown', this._konami, true);
+    if (this._gpConn) window.removeEventListener('gamepadconnected', this._gpConn);
+    if (this._gpCancel) this._gpCancel();
+    if (this._shake) window.removeEventListener('devicemotion', this._shake);
     if (this._copy) document.removeEventListener('copy', this._copy);
     if (this._idleInt) clearInterval(this._idleInt);
     if (this._stopMatrix) this._stopMatrix();
+    if (this._stopGame) this._stopGame();
     if (this._t) clearTimeout(this._t);
   }
 

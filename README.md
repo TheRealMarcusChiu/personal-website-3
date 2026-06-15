@@ -62,14 +62,13 @@ reward curiosity; so does this one.
 
 Try these in the live terminal — none of them appear in `help`:
 
-- `neofetch` — me, rendered as system stats
-- `git log` — me, rendered as commit history
-- `sl` — for the inevitable time you mistype `ls`
-- `man <anything>` · `theme green` · `matrix`
+- run `eggs` to list **every** hidden command, and `achievements` to see how many you've found
+- `neofetch` / `git log` — me, as system stats / commit history
+- `snake` — yes, a real game · `sl` · `fortune` · `cowsay hi`
+- `man <anything>` · `theme green` · `matrix` · `degauss` · `sound on`
 - the Konami code: <kbd>↑</kbd> <kbd>↑</kbd> <kbd>↓</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd> <kbd>←</kbd> <kbd>→</kbd> <kbd>B</kbd> <kbd>A</kbd>
 - `sudo su`, then `cd /root` and `cat flag.txt` — the real prize
 - `rm -rf /` … if you trust me
-- and one or two I'm leaving for you to trip over
 
 </details>
 </details>
@@ -78,33 +77,51 @@ Try these in the live terminal — none of them appear in `help`:
 
 ## Easter eggs implemented
 
-**Hidden commands** (none appear in `help` or Tab-complete — discovery is the point):
+`help` and Tab-complete hide all of these on purpose. Two commands reveal them
+in-terminal: **`eggs`** lists every hidden command, and **`achievements`** tracks how
+many of the ~27 secrets you've found (`12/27`, the rest shown as `???`, persisted).
+
+**Hidden commands**
 
 - `sudo` → "not in the sudoers file. This incident has been reported." (`sudo make me a sandwich` works, though)
-- `sudo su` / `su` → root mode: prompt turns red `root@home:~#`, `whoami` says `root`, unlocks the sealed `/root` dir
-- `exit` / `logout` → CRT power-off animation (collapses to a dot) → "press any key to wake"; from root it just drops you back to marcus
-- `sl` → ASCII steam locomotive chugs across the screen
-- `man <cmd>` → tiny fake manual pages; `man woman` gag
+- `sudo su` / `su` → root mode: prompt turns red `root@home:~#`, `whoami` says `root`, unlocks the sealed `/root`
+- `exit` / `logout` → CRT power-off (collapses to a dot) → "press any key to wake"; from root it just drops you back to marcus (`reboot`/`shutdown` too)
 - `neofetch` / `screenfetch` → about-me as system stats with an ASCII logo
-- `git log` → your career as commit history; `git status` too
+- `git log` → career as commit history (`git status` too)
+- `fortune` → a line from the quote pile · `cowsay <text>` · `finger marcus` → prints `~/.plan`
+- `sl` → ASCII steam locomotive · `man <cmd>` (try `man marcus`, `man woman`)
+- `top`/`htop`, `ps`, `uptime`, `df`, `who`/`w`, `dmesg` → fake system inspectors, joke output
+- `hack [target]` → Hollywood breach sequence, then "just kidding"
 - `matrix` / `cmatrix` → green digital rain (any key dismisses)
-- `theme [amber|green|blue|mono]` → swap CRT phosphor color (persists)
-- `nano`/`emacs` (editor-war jabs), `42`, `cake`, `coffee`/`brew` (HTTP 418)
+- `snake` → a real playable game (arrows/WASD, `q` quits, high score persists)
+- `tic-tac-toe` / `wargames` → "the only winning move is not to play."
+- `qr` → an ASCII QR to the linktree
+- `theme [amber|green|blue|mono]` → swap CRT phosphor colour (persists)
+- `degauss` → the CRT colour-wobble · `tv` → static + NO SIGNAL
+- `sound on` / `off` → keystroke clicks + a CRT power-on thunk (Web Audio, opt-in)
+- jabs & jokes: `nano`/`emacs`/`ed`, `make love`, `xyzzy`, `which marcus`, `ssh marcus@home`, `source ~/.bashrc`, `brew install <x>`, `42`, `cake`, `coffee`, `cat index.html`, `!!`, and the fork bomb `:(){ :|:& };:`
 
-**Triggers & effects:**
+**Triggers & ambient effects**
 
-- Konami code (↑↑↓↓←→←→ B A) → toggles green-phosphor mode
-- Idle screensaver → matrix rain after 60s of stillness
+- Konami code (↑↑↓↓←→←→ B A — or a gamepad) → toggles green-phosphor mode
+- idle screensaver → matrix rain after 60s of stillness
 - `rm -rf /` (and `~`, `.`) → dramatic fake deletion + screen glitch, then "just kidding" — deletes nothing
+- phosphor ghosting when you `clear` · a time-aware greeting + visit-count milestones · low-battery "running on fumes"
+- mobile: shake to `degauss`, tilt to slide the warm glow
+- ~1-in-16 loads show a fake BIOS/POST; ~1-in-50 an Amiga "Guru Meditation" crash
+- open DevTools for a `console` wink that points the way
 
-**Hidden files** (built-in, can't be `rm`'d; surfaced via `ls -a`):
+**Hidden files** (built-in, can't be `rm`'d; surfaced via `ls -a`)
 
-- `~/.plan` (Unix finger tradition), `~/.secret`, `~/.ssh/id_rsa` (joke key — base64 decodes to a wink)
-- `/root/flag.txt` (the reward: contact + "the cake is a lie" passphrase) and `/root/.bash_history`
+- `~/.plan` (the finger tradition, also shown by `finger`), `~/.secret`, `~/.ssh/id_rsa`
+- `/root/flag.txt` (the reward) and `/root/.bash_history`
 
-**The breadcrumb trail (ARG):** DevTools `console.log` wink + an HTML source comment → both point to `ls -a` → `.secret` → `sudo su` → `/root/flag.txt`. Command history is also pre-seeded (`ls -a`, `cat .plan`, `neofetch`) so ↑/history nudge the curious.
-
-**Plus:** ~1-in-16 loads show a brief fake BIOS/POST before login.
+**The trail (ARG)** — a `console.log` wink and an HTML source comment both point to
+`ls -a` → `.secret` → `sudo su` → `/root/flag.txt`. For the truly stubborn there's a
+deeper layer: `cat ~/.ssh/id_rsa` decodes **base64 → ROT13 → `run: prestige`**, and
+`prestige` is the final reward. History is pre-seeded (`ls -a`, `cat .plan`,
+`neofetch`) so ↑/`history` nudge the curious; finds persist in `localStorage` and
+`achievements` is the scoreboard.
 
 ## elsewhere
 
