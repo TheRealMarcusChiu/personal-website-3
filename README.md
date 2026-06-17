@@ -88,6 +88,7 @@ many of the ~27 secrets you've found (`12/27`, the rest shown as `???`, persiste
 - `exit` / `logout` → CRT power-off (collapses to a dot) → "press any key to wake"; from root it just drops you back to marcus (`reboot`/`shutdown` too)
 - `neofetch` / `screenfetch` → about-me as system stats with an ASCII logo
 - `git log` → career as commit history (`git status` too)
+- `marcus` → me as a CLI: `marcus hire` · `now` · `contact` · `quote` · `--version` · `--json`, plus free-text Q&A (`marcus are you hiring?`). Hinted by `which marcus`
 - `fortune` → a line from the quote pile · `cowsay <text>` · `finger marcus` → prints `~/.plan`
 - `sl` → ASCII steam locomotive · `man <cmd>` (try `man marcus`, `man woman`)
 - `top`/`htop`, `ps`, `uptime`, `df`, `who`/`w`, `dmesg` → fake system inspectors, joke output

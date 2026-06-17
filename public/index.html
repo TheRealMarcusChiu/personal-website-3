@@ -519,6 +519,7 @@ class Component extends DCLogic {
       if (!targets.length) { printText('rm: missing operand', C.err); return; }
       if (recursive && targets.some((t) => isCatastrophic(resolve(t)))) return rmFakeout();   // nukes nothing
       for (const t of targets) {
+        if (t === 'marcus' || t === '/usr/bin/marcus') { printText("rm: marcus: you can't get rid of me that easily.", C.dim); continue; }
         const segs = resolve(t);
         const node = nodeAt(segs);
         if (!node) { if (!force) printText('rm: ' + t + ': No such file or directory', C.err); continue; }
@@ -1105,6 +1106,7 @@ class Component extends DCLogic {
       const sub = argv.slice(1);
       if (sub[0] === 'su' || sub[0] === '-s' || sub[0] === '-i' || (sub[0] === '-' && sub[1] === undefined)) { becomeRoot(); return; }
       if (sub[0] === 'make' && sub[1] === 'me' && sub[2] === 'a' && sub[3] === 'sandwich') { printText('okay. *makes you a sandwich*  🥪  (you said the magic word.)', C.exec); return; }
+      if (sub[0] === 'marcus') { printText("you can't sudo a person.", C.dim); return; }
       if (!sub.length) { printText('usage: sudo <command>', C.err); return; }
       printText('[sudo] password for marcus: ', C.text);
       printText('marcus is not in the sudoers file.  This incident has been reported.', C.err);
@@ -1288,7 +1290,7 @@ class Component extends DCLogic {
       ['degauss', 'degaussed the tube'], ['cowsay', 'consulted the cow'], ['top', 'watched the processes'],
       ['xyzzy', 'said the magic word'], ['dmesg', 'read the kernel log'], ['tv', 'lost the signal'],
       ['sound', 'switched on sound'], ['wargames', 'declined to play'], ['qr', 'found the QR code'],
-      ['secret', 'found .secret'], ['idrsa', 'peeked at the key'], ['prestige', 'finished the trail']
+      ['secret', 'found .secret'], ['idrsa', 'peeked at the key'], ['marcus', 'met marcus'], ['prestige', 'finished the trail']
     ];
     const unlock = (id) => { if (!secrets[id]) { secrets[id] = Date.now(); try { localStorage.setItem('mc_secrets', JSON.stringify(secrets)); } catch (e) {} } };
     const cmdAchievements = () => {
@@ -1311,7 +1313,7 @@ class Component extends DCLogic {
       printText('here be dragons — everything that hides from `help`:', C.user);
       printText('', C.dim);
       [['root & access', ['sudo', 'su', 'sudo su', 'exit', 'logout']],
-       ['toys', ['sl', 'cowsay', 'neofetch', 'git log', 'fortune', 'finger', 'matrix', 'snake', 'hack', 'top', 'ps', 'uptime', 'df', 'dmesg', 'who']],
+       ['toys', ['sl', 'cowsay', 'neofetch', 'marcus', 'git log', 'fortune', 'finger', 'matrix', 'snake', 'hack', 'top', 'ps', 'uptime', 'df', 'dmesg', 'who']],
        ['crt', ['theme [amber|green|blue|mono]', 'degauss', 'tv', 'sound [on|off]']],
        ['jokes', ['man <x>', 'nano', 'emacs', 'ed', 'make love', 'xyzzy', '42', 'cake', 'coffee', 'brew install <x>', 'which <x>', 'ssh marcus@home', 'source ~/.bashrc', 'reboot', 'tic-tac-toe', 'qr']],
        ['danger', ['rm -rf /']],
@@ -1524,6 +1526,103 @@ class Component extends DCLogic {
        'marcuschiu9@gmail.com — subject: "the only winning move"'].forEach((l) => printText(l, C.exec));
     };
 
+    // ---- `marcus`: a person, exposed as a CLI ----
+    const extLink = (label, url) => {
+      const a = document.createElement('a');
+      a.textContent = label; a.href = url; a.target = '_blank'; a.rel = 'noopener noreferrer';
+      a.style.cssText = 'color:' + C.link + '; font-weight:700; text-decoration:none; cursor:pointer; transition:text-shadow 0.2s ease;';
+      a.addEventListener('mouseenter', () => { a.style.textDecoration = 'underline'; a.style.textShadow = '0 0 18px rgba(231,173,77,0.45)'; });
+      a.addEventListener('mouseleave', () => { a.style.textDecoration = 'none'; a.style.textShadow = 'none'; });
+      return a;
+    };
+    const MARCUS_AVATAR = [
+      '       .-"""""-.    ',
+      '      /  _   _  \\   ',
+      '     |  (o) (o)  |  ',
+      '     |     <     |  ',
+      '      \\   ___   /   ',
+      "       '-.....-'    "
+    ];
+    const cmdMarcus = async (argv) => {
+      unlock('marcus');
+      const sub = (argv[1] || '').toLowerCase().replace(/^--?/, '');
+      const rest = argv.slice(1).join(' ');
+      // recursive jokes
+      if (sub === 'marcus') { printText('now there are two of us.', C.dim); return; }
+      if (sub === 'sudo') { printText("I don't take orders.", C.dim); return; }
+      if (sub === '') {
+        MARCUS_AVATAR.forEach((l) => printText(l, C.user));
+        printText('', C.dim);
+        const n = lineEl(); n.appendChild(span('marcus chiu', C.user, { fontWeight: '700' })); n.appendChild(span(' — software, mostly. present tense.', C.text)); printEl(n);
+        printText('builds calm systems · trains mind & body · hoards quotes.', C.dim);
+        printText('run `marcus --help`  ·  or just `marcus hire`', C.dim);
+        return;
+      }
+      if (sub === 'help' || sub === 'h') {
+        printText('marcus — a person, exposed as a CLI', C.text);
+        printText('usage: marcus [command]', C.dim);
+        [['hire', 'why you might want to'], ['now', "what I'm up to lately"], ['contact', 'how to reach me'],
+         ['resume', 'the formal version'], ['quote', 'something worth repeating'], ['--version', '30.x (stable)'], ['--json', 'for the machines']].forEach((r) => {
+          const row = lineEl(); row.appendChild(span('  ' + r[0].padEnd(12), C.user)); row.appendChild(span(r[1], C.dim)); printEl(row);
+        });
+        printText('(or just ask — e.g. `marcus are you hiring?`)', C.dim);
+        return;
+      }
+      if (sub === 'version' || sub === 'v') { printText('marcus 30.x — stable channel, occasional hotfixes. shipping since 1995.', C.text); return; }
+      if (sub === 'json') {
+        printText('{', C.dim);
+        [['name', '"Marcus Chiu"'], ['role', '"software person"'], ['status', '"present"'], ['stack', '["js","go","python","whatever ships"]'], ['editor', '"vim"'], ['coffee', 'true'], ['contact', '"marcuschiu9@gmail.com"']].forEach((kv, i, arr) => {
+          const row = lineEl(); row.appendChild(span('  "', C.text)); row.appendChild(span(kv[0], C.exec)); row.appendChild(span('": ' + kv[1] + (i < arr.length - 1 ? ',' : ''), C.text)); printEl(row);
+        });
+        printText('}', C.dim);
+        return;
+      }
+      if (sub === 'hire' || sub === 'work' || sub === 'job') {
+        ['> available for genuinely interesting problems.',
+         '> I like systems that stay calm under load and code people enjoy reading.',
+         '> if that sounds like your team: marcuschiu9@gmail.com'].forEach((l) => printText(l, C.exec));
+        printText('(say "the cake is a lie" so I know you did your homework.)', C.dim);
+        return;
+      }
+      if (sub === 'now') {
+        printText("what I'm up to lately:", C.user);
+        const t = await readFile(HOME.concat('.plan'));
+        (t || '(quiet lately)').replace(/\n$/, '').split('\n').forEach((l) => printText(l, C.dim));
+        return;
+      }
+      if (sub === 'contact' || sub === 'reach') {
+        printText('reach me:', C.user);
+        const row = (label, node) => { const d = lineEl(); d.appendChild(span('  ' + label.padEnd(10), C.dim)); d.appendChild(node); printEl(d); };
+        row('email', extLink('marcuschiu9@gmail.com', 'mailto:marcuschiu9@gmail.com'));
+        row('linktree', extLink('linktr.ee/marcuschiu', 'https://linktr.ee/marcuschiu'));
+        row('github', extLink('TheRealMarcusChiu', 'https://github.com/TheRealMarcusChiu'));
+        return;
+      }
+      if (sub === 'resume' || sub === 'cv') {
+        printText('the formal version lives here:', C.user);
+        const d = lineEl(); d.appendChild(span('  ', C.dim));
+        d.appendChild(extLink('linktr.ee/marcuschiu', 'https://linktr.ee/marcuschiu'));
+        d.appendChild(span('   ·   ', C.dim));
+        d.appendChild(extLink('github', 'https://github.com/TheRealMarcusChiu'));
+        printEl(d);
+        return;
+      }
+      if (sub === 'quote') { printText(FORTUNES[Math.floor(Math.random() * FORTUNES.length)], C.text); return; }
+      // AMA fallback — free text in marcus's voice
+      const q = rest.toLowerCase();
+      let ans;
+      if (/hir|job|\bwork\b|avail/.test(q)) ans = 'always, for the right problem — marcuschiu9@gmail.com';
+      else if (/contact|email|reach|talk/.test(q)) ans = 'easiest: marcuschiu9@gmail.com  (or run `marcus contact`)';
+      else if (/robot|\bai\b|human|real|alive/.test(q)) ans = 'last I checked, no — but I do dream in monospace.';
+      else if (/joke|funny/.test(q)) ans = 'I would tell you a UDP joke, but you might not get it.';
+      else if (/coffee|tea/.test(q)) ans = 'always brewing. (well — `coffee` begs to differ.)';
+      else if (/vim|editor|emacs/.test(q)) ans = 'vim. always vim. and yes, I can exit it.';
+      else if (/love|meaning|life|universe|\b42\b/.test(q)) ans = '42.';
+      else if (/project|build|made|portfolio/.test(q)) ans = 'plenty — try `ls`, then `./projects.sh`.';
+      else ans = "I'm just a command. try `marcus --help`.";
+      printText('> ' + ans, C.exec);
+    };
+
     // ---- snake: a real playable game on the CRT ----
     let snakeState = null;
     const stopGame = () => {
@@ -1633,6 +1732,7 @@ class Component extends DCLogic {
         case 'fortune': cmdFortune(); return;
         case 'cowsay': cmdCowsay(argv); return;
         case 'finger': await cmdFinger(argv); return;
+        case 'marcus': await cmdMarcus(argv); return;
         case 'top': case 'htop': cmdTop(); return;
         case 'ps': cmdPs(); return;
         case 'uptime': cmdUptime(); return;
