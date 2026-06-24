@@ -65,6 +65,10 @@
             "var-log.sh": {
               "type": "exec",
               "url": "http://git.marcuschiu.com/var-log/"
+            },
+            "workouts.sh": {
+              "type": "exec",
+              "url": "http://git.marcuschiu.com/workouts/"
             }
           }
         }
