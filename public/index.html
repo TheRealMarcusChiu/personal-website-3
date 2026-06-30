@@ -1002,7 +1002,7 @@ class Component extends DCLogic {
       else printText('theme: unknown theme: ' + name + '  (try: ' + Object.keys(THEMES).join(', ') + ')', C.err);
     };
 
-    // ---- matrix rain (the `matrix` command + the idle screensaver) ----
+    // ---- matrix rain (the `matrix` command) ----
     let fxActive = false, matrixRAF = null, matrixCv = null, matrixResize = null;
     const stopMatrix = () => {
       if (matrixRAF) cancelAnimationFrame(matrixRAF); matrixRAF = null;
@@ -1331,7 +1331,7 @@ class Component extends DCLogic {
         const d = lineEl(); d.appendChild(span('  ' + g[1].join(' · '), C.dim)); printEl(d);
         printText('', C.dim);
       });
-      printText('also hidden: the Konami code, an idle screensaver, dotfiles (try ls -a), and a sealed /root.', C.dim);
+      printText('also hidden: the Konami code, dotfiles (try ls -a), and a sealed /root.', C.dim);
     };
 
     // ---- audio layer (Web Audio; opt-in via `sound on`) ----
@@ -2038,14 +2038,6 @@ class Component extends DCLogic {
     };
     window.addEventListener('devicemotion', this._shake);
 
-    // ---- idle screensaver: matrix rain after a minute of stillness ----
-    let lastActivity = Date.now();
-    const bump = () => { lastActivity = Date.now(); };
-    ['keydown', 'mousedown', 'pointermove', 'wheel', 'touchstart'].forEach((ev) => window.addEventListener(ev, bump, { passive: true }));
-    this._idleInt = setInterval(() => {
-      if (Date.now() - lastActivity > 60000 && !vimActive && !fxActive && !booting && !poweredOff) startMatrix();
-    }, 5000);
-
     // ---- a wink for anyone who opens DevTools ----
     try {
       console.log('%c  marcus@home  ', 'background:#15110b; color:#e7ad4d; font-weight:700; font-size:16px; padding:6px 10px; border-radius:4px;');
@@ -2081,7 +2073,6 @@ class Component extends DCLogic {
     if (this._gpCancel) this._gpCancel();
     if (this._shake) window.removeEventListener('devicemotion', this._shake);
     if (this._copy) document.removeEventListener('copy', this._copy);
-    if (this._idleInt) clearInterval(this._idleInt);
     if (this._stopMatrix) this._stopMatrix();
     if (this._stopGame) this._stopGame();
     if (this._t) clearTimeout(this._t);
