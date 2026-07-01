@@ -13,9 +13,6 @@
             ".profile": {
               "type": "file"
             },
-            "LALA.txt": {
-              "type": "file"
-            },
             "NOW.txt": {
               "type": "file"
             },
