@@ -26,10 +26,6 @@
             },
             "README.txt": {
               "type": "readme"
-            },
-            "WAS": {
-              "type": "dir",
-              "children": {}
             }
           }
         }
