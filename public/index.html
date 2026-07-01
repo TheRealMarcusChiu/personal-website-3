@@ -1896,6 +1896,13 @@ class Component extends DCLogic {
       };
       self._t = setTimeout(tick, 280);
     });
+    // when the URL is /now (or ?now / #now), the intro auto-runs `cat NOW.txt`
+    const isNow = /^\/now\/?$/i.test(location.pathname) || /(^|[?&])now(=|&|$)/i.test(location.search) || /^#now$/i.test(location.hash);
+    const introCmd = isNow ? 'cat NOW.txt' : 'cat README.txt';
+    const renderIntro = async () => {
+      if (isNow) { await cmdCat(['NOW.txt']); printText('', C.dim); printText(HINT, C.dim); return; }
+      renderReadme();
+    };
     const renderReadme = () => {
       README.forEach((para, pi) => {
         if (pi > 0) printText('', C.dim);
@@ -1930,12 +1937,12 @@ class Component extends DCLogic {
       loginLine = 'Last login: ' + fmtStamp(new Date()) + ' on ttys001';
     }
 
-    const renderBooted = () => {
+    const renderBooted = async () => {
       const committed = lineEl();
       committed.appendChild(promptPrefix());
-      committed.appendChild(span('cat README.txt', C.text));
+      committed.appendChild(span(introCmd, C.text));
       out.appendChild(committed);
-      renderReadme();
+      await renderIntro();
       showPrompt();
     };
     // a click or keypress during the intro fast-forwards to the finished screen
@@ -1988,11 +1995,11 @@ class Component extends DCLogic {
       out.appendChild(promptLine);
       scroll();
       input.focus();
-      await typeCommand('cat README.txt');
+      await typeCommand(introCmd);
       await wait(320);
-      commitPrompt('cat README.txt');
+      commitPrompt(introCmd);
       booting = false;
-      renderReadme();
+      await renderIntro();
       showPrompt();
     };
     boot();
