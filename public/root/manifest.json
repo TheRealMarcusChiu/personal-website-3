@@ -39,6 +39,9 @@
                 }
               }
             },
+            "NOW.txt": {
+              "type": "file"
+            },
             "projects.sh": {
               "type": "exec",
               "url": "http://git.marcuschiu.com/projects/"
