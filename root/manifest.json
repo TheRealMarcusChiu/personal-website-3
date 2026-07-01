@@ -13,6 +13,14 @@
             ".profile": {
               "type": "file"
             },
+            "NOW": {
+              "type": "dir",
+              "children": {
+                "2026-07-01-NOW.txt": {
+                  "type": "file"
+                }
+              }
+            },
             "NOW.txt": {
               "type": "file"
             },
