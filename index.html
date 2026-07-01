@@ -2237,22 +2237,6 @@ class Component extends DCLogic {
         row.onclick = it.onclick;
         return row;
       };
-      if (was.length) {
-        const hd = el('div', 'padding:14px 11px 5px;font:400 10.5px/1 \'JetBrains Mono\',monospace;letter-spacing:.04em;color:' + A.faint + ';');
-        hd.textContent = 'archive'; ui.list.appendChild(hd);
-      }
-      was.forEach((w) => {
-        const label = w.name.replace(/\.txt$/, '');
-        ui.list.appendChild(mk({ key: 'was:' + w.name, label: label, onclick: () => setMode({ kind: 'was', name: w.name }) }));
-      });
-      if (was.length) {
-        const hd = el('div', 'padding:14px 11px 5px;font:400 10.5px/1 \'JetBrains Mono\',monospace;letter-spacing:.04em;color:' + A.faint + ';');
-        hd.textContent = 'archive'; ui.list.appendChild(hd);
-      }
-      was.forEach((w) => {
-        const label = w.name.replace(/\.txt$/, '');
-        ui.list.appendChild(mk({ key: 'was:' + w.name, label: label, onclick: () => setMode({ kind: 'was', name: w.name }) }));
-      });
       // build a nested tree from the flat file paths, then render it collapsibly
       const collapsed = ui._collapsed || (ui._collapsed = new Set());
       const tree = {};
