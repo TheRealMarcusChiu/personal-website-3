@@ -1,8 +1,9 @@
 last updated: June 30, 2026
 
 NOW
-- revamping my websites:
-  - https://git.marcuschiu.com/var-log
+- revamping my outdated websites:
+  - https://git.marcuschiu.com/var-log - a personal knowledge garden
+  - https://git.marcuschiu.com/images  - an archive of stuff stolen from the internet 
 - reading `The Blessing of Humility` ~ Jerry Bridges
 - setting up 100Gb network for homelab
 
