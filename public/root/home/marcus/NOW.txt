@@ -1,16 +1,9 @@
-/now — what I'm focused on right now
-last updated: June 2026 · marcus@home
+last updated: June 30, 2026
 
-WORKING ON
-- the terminal homepage you're reading (git.marcuschiu.com)
-- AI tagging so I can search my image archive by content
-- rewriting var-log in Go, slowly, for fun
+NOW
+- revamping my websites:
+  - https://git.marcuschiu.com/var-log
+- reading `The Blessing of Humility` ~ Jerry Bridges
+- setting up 100Gb network for homelab
 
-READING
-- The Unix Programming Environment (Kernighan & Pike)
-
-BODY
-- zone 2 base building + mobility, most mornings
-
-this is a /now page — a snapshot of what has my attention.
-more: cat README.txt · ./linktree.sh
+more: cat README.txt
