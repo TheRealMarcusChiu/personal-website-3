@@ -343,10 +343,11 @@ class Component extends DCLogic {
     });
     const HINT = "tip: 'ls' to look around · 'cat <file>' to read · 'help' for commands";
 
-    const linkSpan = (label, fileName) => {
+    const linkSpan = (label, target) => {
       const a = document.createElement('a');
       a.textContent = label;
-      a.href = LINKS[fileName] || '#';
+      // inline URLs (http/https/mailto) are used directly; bare names fall back to the link map
+      a.href = /^(https?:|mailto:)/i.test(target) ? target : (LINKS[target] || '#');
       a.target = '_blank';
       a.rel = 'noopener noreferrer';
       a.style.cssText = 'color:' + C.link + '; font-weight:700; text-decoration:none; cursor:pointer; transition:color 0.2s ease, text-shadow 0.2s ease;';
@@ -452,6 +453,26 @@ class Component extends DCLogic {
       if (node.type !== 'dir') { printText('cd: not a directory: ' + arg, C.err); return; }
       cwd = segs;
     };
+    // parse a single line into string / link segments, then print it link-aware
+    const segsFromLine = (line) => {
+      const segs = []; const re = /\[([^\]]+)\]\(([^)]+)\)/g; let last = 0, m;
+      while ((m = re.exec(line))) {
+        if (m.index > last) segs.push(line.slice(last, m.index));
+        segs.push(L(m[1], m[2]));
+        last = m.index + m[0].length;
+      }
+      if (last < line.length) segs.push(line.slice(last));
+      return segs;
+    };
+    const printLineWithLinks = (line) => {
+      if (line === '') { printText('', C.text); return; }
+      const d = lineEl();
+      segsFromLine(line).forEach((seg) => {
+        if (typeof seg === 'string') d.appendChild(document.createTextNode(seg));
+        else d.appendChild(linkSpan(seg.t, seg.link));
+      });
+      printEl(d);
+    };
     const cmdCat = async (args) => {
       if (args.length === 0) { printText('cat: missing file operand', C.err); return; }
       for (const a of args) {
@@ -469,7 +490,8 @@ class Component extends DCLogic {
         // file + exec: overlay content if edited, else the real bytes from ./root
         const text = await readFile(segs);
         if (text == null) { printText('cat: ' + a + ': could not read file', C.err); continue; }
-        text.replace(/\n$/, '').split('\n').forEach((l) => printText(l, C.text));
+        // render markdown-style [label](url) links the same way README does
+        text.replace(/\n$/, '').split('\n').forEach((l) => printLineWithLinks(l));
       }
     };
     const cmdHelp = () => {
