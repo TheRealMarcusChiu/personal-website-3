@@ -40,8 +40,8 @@ Environment=ALLOW_ORIGIN=*
 # Skip git push while testing:
 # Environment=NO_GIT=1
 
-# Use the full path to node (adjust if you installed via nvm/fnm, e.g. /usr/local/bin/node).
-ExecStart=/usr/bin/node server/server.js
+# Full path to node (nvm install on this container).
+ExecStart=/root/.nvm/versions/node/v24.16.0/bin/node /root/personal-website-3/server/server.js
 
 Restart=on-failure
 RestartSec=3

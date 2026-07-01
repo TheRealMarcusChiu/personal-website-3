@@ -115,7 +115,7 @@ function run(cmd, args) {
 
 function runBuild() {
   if (NO_BUILD) return 'build skipped';
-  run('node', [BUILD_JS]);
+  run(process.execPath, [BUILD_JS]);   // same node binary that runs this server (nvm-safe under systemd)
   return 'built';
 }
 
