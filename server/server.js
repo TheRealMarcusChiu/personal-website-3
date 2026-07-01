@@ -67,9 +67,10 @@ function safePath(rel) {
   return { full: full, rel: within.split(path.sep).join('/') };
 }
 
-// Walk ./root and return every editable file (dotfiles included; manifest.json/fs.js/.git excluded).
-function listFiles() {
-  const out = [];
+// Walk ./root and return editable files + every directory (incl. empty ones).
+// dotfiles included; manifest.json/fs.js/.git excluded.
+function listTree() {
+  const files = [], dirs = [];
   (function walk(dir, rel) {
     let names;
     try { names = fs.readdirSync(dir).sort((a, b) => a.localeCompare(b)); } catch (e) { return; }
@@ -78,12 +79,13 @@ function listFiles() {
       const full = path.join(dir, name);
       const r = rel ? rel + '/' + name : name;
       let st; try { st = fs.statSync(full); } catch (e) { continue; }
-      if (st.isDirectory()) walk(full, r);
-      else if (!BLOCKED.has(name)) out.push({ path: r, size: st.size });
+      if (st.isDirectory()) { dirs.push(r); walk(full, r); }
+      else if (!BLOCKED.has(name)) files.push({ path: r, size: st.size });
     }
   })(ROOT_DIR, '');
-  return out;
+  return { files: files, dirs: dirs };
 }
+function listFiles() { return listTree().files; }
 const NOW_DIR = path.join(MARCUS_DIR, 'NOW');   // archive of past NOW.txt entries
 const BUILD_JS = path.join(__dirname, 'build.js');   // build.js sits next to this file in ./server
 const DEPLOY_SH = path.join(__dirname, 'update-production.sh');   // ssh to the web box + git pull
@@ -306,7 +308,8 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (p === '/api/files' && method === 'GET') {
-      return send(res, 200, { items: listFiles() });
+      const t = listTree();
+      return send(res, 200, { items: t.files, dirs: t.dirs });
     }
 
     if (p === '/api/file' && method === 'GET') {

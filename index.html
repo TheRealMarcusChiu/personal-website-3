@@ -2113,6 +2113,19 @@ class Component extends DCLogic {
       return s.replace(/\/+$/, '');
     };
     const embeddedNow = () => { try { return window.__ROOT__.files['home/marcus/NOW.txt']; } catch (e) { return null; } };
+    // all directory paths (incl. empty) from the embedded manifest, for the offline fallback
+    const embeddedDirs = () => {
+      const out = [];
+      try {
+        (function walk(node, rel) {
+          const ch = node && node.children; if (!ch) return;
+          Object.keys(ch).forEach((name) => {
+            if (ch[name].type === 'dir') { const r = rel ? rel + '/' + name : name; out.push(r); walk(ch[name], r); }
+          });
+        })(window.__ROOT__.manifest, '');
+      } catch (e) {}
+      return out;
+    };
     const embeddedWas = () => {
       const out = [];
       try { const f = window.__ROOT__.files; Object.keys(f).forEach((k) => { const mm = /^home\/marcus\/NOW\/(.+)$/.exec(k); if (mm) out.push({ name: mm[1], raw: f[k] }); }); } catch (e) {}
@@ -2189,11 +2202,26 @@ class Component extends DCLogic {
       if (ui.dateLabel) ui.dateLabel.textContent = 'last updated:';
       if (ui.date) { ui.date.placeholder = 'July 1, 2026'; ui.date.disabled = false; }
       if (ui.delBtn) ui.delBtn.style.display = 'none';
+      if (ui.action) ui.action.style.display = '';
+      if (ui.contentRow) ui.contentRow.style.display = '';
       // preview only makes sense for the two NOW.txt modes
       if (ui.prevRow) ui.prevRow.style.display = (m.kind === 'new' || m.kind === 'current') ? '' : 'none';
       // README is freeform: hide the date field + retitle the preview
       if (ui.dateRow) ui.dateRow.style.display = (m.kind === 'readme') ? 'none' : '';
       if (ui.prevLabel) ui.prevLabel.textContent = 'preview · ' + (m.kind === 'readme' ? 'README.txt' : 'NOW.txt');
+      if (m.kind === 'dir') {
+        // directory: nothing to edit, just delete (recursively) — hide the editor fields
+        ui.dateRow.style.display = 'none';
+        ui.contentRow.style.display = 'none';
+        ui.action.style.display = 'none';
+        ui.modeLabel.textContent = 'directory · ' + m.name;
+        ui.modeHint.textContent = m.count
+          ? 'deleting removes this directory and all ' + m.count + ' item(s) inside it, then rebuilds & pushes.'
+          : 'empty directory. deleting removes it, then rebuilds & pushes.';
+        ui.delBtn.style.display = ''; ui.delBtn.textContent = 'delete';
+        setStatus('');
+        return;
+      }
       if (m.kind === 'file') {
         const isNew = !m.name;
         ui.dateRow.style.display = '';
@@ -2259,10 +2287,10 @@ class Component extends DCLogic {
     };
 
     const refreshList = async () => {
-      let files = [];
-      try { files = (await api('GET', '/api/files')).items || []; }
+      let files = [], dirs = [];
+      try { const r = await api('GET', '/api/files'); files = r.items || []; dirs = r.dirs || []; }
       catch (e) {
-        try { files = Object.keys(window.__ROOT__.files).filter((k) => k !== 'manifest.json' && k !== 'fs.js').sort().map((k) => ({ path: k })); } catch (e2) {}
+        try { files = Object.keys(window.__ROOT__.files).filter((k) => k !== 'manifest.json' && k !== 'fs.js').sort().map((k) => ({ path: k })); dirs = embeddedDirs(); } catch (e2) {}
       }
       ui.list.innerHTML = '';
       const mk = (it) => {
@@ -2285,14 +2313,28 @@ class Component extends DCLogic {
           else { const dp = parts.slice(0, i + 1).join('/'); node[part] = node[part] || { dir: true, name: part, path: dp, children: {} }; node = node[part].children; }
         });
       });
+      // graft in directories that contain no files (so empty dirs still show)
+      dirs.forEach((dp) => {
+        const parts = dp.split('/'); let node = tree;
+        parts.forEach((part, i) => {
+          const p = parts.slice(0, i + 1).join('/');
+          if (!node[part]) node[part] = { dir: true, name: part, path: p, children: {} };
+          node = node[part].children || (node[part].children = {});
+        });
+      });
       const renderTree = (obj, depth) => {
         Object.values(obj).sort((a, b) => (a.dir === b.dir) ? a.name.localeCompare(b.name) : (a.dir ? -1 : 1)).forEach((node) => {
           const indent = 11 + depth * 14;
           if (node.dir) {
             const open = !collapsed.has(node.path);
-            const row = mk({ label: (open ? '▾ ' : '▸ ') + node.name + '/', indent: indent, dim: true, onclick: () => { open ? collapsed.add(node.path) : collapsed.delete(node.path); refreshList(); } });
+            const kids = Object.keys(node.children).length;
+            const row = mk({ key: 'dir:' + node.path, label: '', dim: true, indent: indent, onclick: () => setMode({ kind: 'dir', name: node.path, count: kids }) });
+            row.textContent = '';
+            const caret = el('span', 'display:inline-block;width:15px;cursor:pointer;', { textContent: kids ? (open ? '▾' : '▸') : '·' });
+            caret.onclick = (e) => { e.stopPropagation(); if (!kids) return; open ? collapsed.add(node.path) : collapsed.delete(node.path); refreshList(); };
+            row.append(caret, document.createTextNode(node.name + '/'));
             ui.list.appendChild(row);
-            if (open) renderTree(node.children, depth + 1);
+            if (open && kids) renderTree(node.children, depth + 1);
           } else {
             ui.list.appendChild(mk({ key: 'file:' + node.path, label: node.name, indent: indent, onclick: () => setMode({ kind: 'file', name: node.path }) }));
           }
@@ -2334,9 +2376,13 @@ class Component extends DCLogic {
     };
 
     const deleteFile = async () => {
-      if (adminBusy || mode.kind !== 'file' || !mode.name) return;
-      if (!window.confirm('Delete ' + mode.name + ' from root/ ? This rebuilds & pushes.')) return;
-      adminBusy = true; ui.delBtn.textContent = 'Deleting…'; ui.delBtn.style.opacity = '0.6'; setStatus('deleting ' + mode.name + '…');
+      if (adminBusy || (mode.kind !== 'file' && mode.kind !== 'dir') || !mode.name) return;
+      const isDir = mode.kind === 'dir';
+      const msg = isDir
+        ? ('Delete directory ' + mode.name + (mode.count ? ' and all ' + mode.count + ' item(s) inside' : '') + ' ? This rebuilds & pushes.')
+        : ('Delete ' + mode.name + ' from root/ ? This rebuilds & pushes.');
+      if (!window.confirm(msg)) return;
+      adminBusy = true; ui.delBtn.textContent = 'deleting…'; ui.delBtn.style.opacity = '0.6'; setStatus('deleting ' + mode.name + '…');
       try {
         const resp = await api('DELETE', '/api/file?path=' + encodeURIComponent(mode.name));
         const bits = []; if (resp.built) bits.push(resp.built === true ? 'built' : resp.built); if (resp.git) bits.push(resp.git);
@@ -2345,7 +2391,7 @@ class Component extends DCLogic {
       } catch (e) {
         setStatus('✗ ' + e.message, A.err);
       } finally {
-        adminBusy = false; ui.delBtn.textContent = 'Delete'; ui.delBtn.style.opacity = '1';
+        adminBusy = false; ui.delBtn.textContent = 'delete'; ui.delBtn.style.opacity = '1';
       }
     };
 
@@ -2441,7 +2487,7 @@ class Component extends DCLogic {
       ui.date.oninput = renderPreview;
       dateRow.appendChild(ui.date);
 
-      const contentRow = el('div', 'display:flex;flex-direction:column;');
+      const contentRow = el('div', 'display:flex;flex-direction:column;'); ui.contentRow = contentRow;
       contentRow.appendChild(el('div', 'font:400 10.5px/1.3 \'JetBrains Mono\',monospace;color:' + A.faint + ';margin-bottom:6px;', { textContent: 'content' }));
       ui.content = el('textarea', inputStyle + 'min-height:150px;resize:vertical;line-height:1.55;', { spellcheck: false, placeholder: 'WORKING ON\n- …' });
       ui.content.oninput = renderPreview;
