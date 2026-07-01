@@ -69,6 +69,14 @@
               "type": "exec",
               "url": "http://git.marcuschiu.com/var-log/"
             },
+            "WAS": {
+              "type": "dir",
+              "children": {
+                "NOW-2026-06-30.txt": {
+                  "type": "file"
+                }
+              }
+            },
             "workouts.sh": {
               "type": "exec",
               "url": "http://git.marcuschiu.com/workouts/"
