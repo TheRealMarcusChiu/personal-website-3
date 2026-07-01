@@ -18,6 +18,17 @@
             },
             "README.txt": {
               "type": "readme"
+            },
+            "WAS": {
+              "type": "dir",
+              "children": {
+                "NOW-2026-06-30.txt": {
+                  "type": "file"
+                },
+                "NOW-2026-07-01.txt": {
+                  "type": "file"
+                }
+              }
             }
           }
         }

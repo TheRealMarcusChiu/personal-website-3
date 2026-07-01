@@ -4,10 +4,9 @@ NOW
 - revamping my outdated websites:
   - https://git.marcuschiu.com         - this one
   - https://git.marcuschiu.com/var-log - a personal knowledge garden
-  - https://git.marcuschiu.com/images  - an archive of stuff stolen from the internet
+  - https://git.marcuschiu.com/images  - an archive of stuff stolen from the internet 
 - reading `The Blessing of Humility` ~ Jerry Bridges
 - setting up 100Gb network for homelab
 - training for 1RM 135lb weight pullup
-- finding ways god's character is reflected in everyday things under the sun
 
 more: cat README.txt
