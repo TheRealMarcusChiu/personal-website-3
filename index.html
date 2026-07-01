@@ -2221,17 +2221,11 @@ class Component extends DCLogic {
     };
 
     const refreshList = async () => {
-      let was = [];
-      try { was = (await api('GET', '/api/was')).items || []; }
-      catch (e) { was = embeddedWas(); }
       let files = [];
       try { files = (await api('GET', '/api/files')).items || []; }
       catch (e) {
         try { files = Object.keys(window.__ROOT__.files).filter((k) => k !== 'manifest.json' && k !== 'fs.js').sort().map((k) => ({ path: k })); } catch (e2) {}
       }
-      // archives have their own group above; everything else (incl. NOW.txt & README.txt)
-      // lists naturally at its real path, like .bashrc / .profile
-      files = files.filter((f) => !/(^|\/)WAS\//.test(f.path));
       ui.list.innerHTML = '';
       const mk = (it) => {
         const pad = 'padding:8px 11px;' + (it.indent ? 'padding-left:' + it.indent + 'px;' : '');
@@ -2243,6 +2237,14 @@ class Component extends DCLogic {
         row.onclick = it.onclick;
         return row;
       };
+      if (was.length) {
+        const hd = el('div', 'padding:14px 11px 5px;font:400 10.5px/1 \'JetBrains Mono\',monospace;letter-spacing:.04em;color:' + A.faint + ';');
+        hd.textContent = 'archive'; ui.list.appendChild(hd);
+      }
+      was.forEach((w) => {
+        const label = w.name.replace(/\.txt$/, '');
+        ui.list.appendChild(mk({ key: 'was:' + w.name, label: label, onclick: () => setMode({ kind: 'was', name: w.name }) }));
+      });
       if (was.length) {
         const hd = el('div', 'padding:14px 11px 5px;font:400 10.5px/1 \'JetBrains Mono\',monospace;letter-spacing:.04em;color:' + A.faint + ';');
         hd.textContent = 'archive'; ui.list.appendChild(hd);
