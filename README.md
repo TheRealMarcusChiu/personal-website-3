@@ -64,11 +64,12 @@ publishes `NOW.txt`. It talks to `server.js` over a configurable endpoint (set i
 the panel; saved to `localStorage`, with an optional token). Three actions:
 
 - **New NOW** — pick a date (defaults to today) + content, then **Publish**. The
-  server archives the current `NOW.txt` into `root/home/marcus/WAS/NOW-YYYY-MM-DD.txt`
-  (the date parsed from its first `last updated:` line), writes the new one,
+  server archives the current `NOW.txt` into `root/home/marcus/NOW/YYYY-MM-DD-NOW.txt`
+  (the date parsed from its first `last updated:` line), writes the new one
+  (whose footer points readers at that archive via `ls NOW` / `cat NOW/…`),
   reruns `server/build.js`, and `git commit && git push`.
 - **Edit current** — overwrite `NOW.txt` in place (no archive).
-- **Edit archive** — fix up any past `WAS/` entry.
+- **Edit archive** — fix up any past `NOW/` entry.
 - **README.txt** — edit the site's intro (freeform, no date), rebuild & push.
 
 Run the backend alongside the static site:

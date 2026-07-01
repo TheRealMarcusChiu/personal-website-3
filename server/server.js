@@ -4,7 +4,7 @@
  *
  * The static terminal site (index.html) enters "admin mode" with Cmd/Ctrl+E and
  * posts here to compose & publish NOW.txt. On every write this server:
- *   1. mutates files under ./root (archiving the old NOW.txt into ./root/home/marcus/WAS/)
+ *   1. mutates files under ./root (archiving the old NOW.txt into ./root/home/marcus/NOW/)
  *   2. runs `node server/build.js` to regenerate root/manifest.json + root/fs.js
  *   3. git add / commit / push   (so GitHub Pages redeploys)
  *
@@ -27,10 +27,10 @@
  *   GET  /api/health              -> { ok, version }
  *   GET  /api/now                 -> { date, content, raw }
  *   PUT  /api/now                 -> overwrite NOW.txt in place        body { date, content }
- *   POST /api/now                 -> publish: archive current -> WAS,  body { date, content }
+ *   POST /api/now                 -> publish: archive current -> NOW/, body { date, content }
  *                                    then write the new NOW.txt
  *   GET  /api/was                 -> { items: [ { name, date, raw } ] }
- *   PUT  /api/was?name=NOW-….txt  -> overwrite an archived file        body { date, content }
+ *   PUT  /api/was?name=….-NOW.txt -> overwrite an archived file        body { date, content }
  *   GET  /api/readme              -> { raw }
  *   PUT  /api/readme              -> overwrite README.txt in place     body { content }
  *   GET  /api/files               -> { items: [ { path, size } ] }  (all editable files under ./root)
@@ -84,7 +84,7 @@ function listFiles() {
   })(ROOT_DIR, '');
   return out;
 }
-const WAS_DIR = path.join(MARCUS_DIR, 'WAS');
+const NOW_DIR = path.join(MARCUS_DIR, 'NOW');   // archive of past NOW.txt entries
 const BUILD_JS = path.join(__dirname, 'build.js');   // build.js sits next to this file in ./server
 const DEPLOY_SH = path.join(__dirname, 'update-production.sh');   // ssh to the web box + git pull
 
@@ -109,10 +109,14 @@ function todayLabel() {
   return MONTHS[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
 }
 
-// Assemble the canonical NOW.txt text.
-function buildNowText(date, content) {
+// Assemble the canonical NOW.txt text. When there is a most-recent archived entry,
+// append a hint showing how to read past entries.
+function buildNowText(date, content, archiveHint) {
   const body = String(content == null ? '' : content).replace(/\r/g, '').replace(/\s+$/, '');
-  return 'last updated: ' + String(date).trim() + '\n\n' + body + '\n\n' + NOW_FOOTER + '\n';
+  let footer = '';
+  if (archiveHint) footer += 'to see what I was doing:\n  ls NOW\n  cat NOW/' + archiveHint + '\n\n';
+  footer += NOW_FOOTER;
+  return 'last updated: ' + String(date).trim() + '\n\n' + body + '\n\n' + footer + '\n';
 }
 
 // "July 1, 2026"  ->  "2026-07-01"   (accepts a full "last updated: …" line too)
@@ -140,14 +144,20 @@ function archiveDateFor(rawText, filePath) {
 
 function ensureDir(dir) { if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true }); }
 
-// Pick an unused WAS filename for a given ISO date (avoids clobbering same-day archives).
+// Pick an unused NOW/ archive filename for a given ISO date (avoids clobbering same-day archives).
 function uniqueArchivePath(iso) {
-  ensureDir(WAS_DIR);
-  let name = 'NOW-' + iso + '.txt';
-  let full = path.join(WAS_DIR, name);
+  ensureDir(NOW_DIR);
+  let name = iso + '-NOW.txt';
+  let full = path.join(NOW_DIR, name);
   let i = 2;
-  while (fs.existsSync(full)) { name = 'NOW-' + iso + '-' + i + '.txt'; full = path.join(WAS_DIR, name); i++; }
+  while (fs.existsSync(full)) { name = iso + '-' + i + '-NOW.txt'; full = path.join(NOW_DIR, name); i++; }
   return { name: name, full: full };
+}
+
+// Filename of the most-recently-dated archived entry, or null.
+function latestArchiveName() {
+  const items = listWas();
+  return items.length ? items[0].name : null;
 }
 
 function run(cmd, args) {
@@ -205,23 +215,27 @@ function readNow() {
   return fs.readFileSync(NOW_FILE, 'utf8');
 }
 
+// A trailing footer line the editable content should never include.
+function isFooterLine(l) {
+  return l.trim() === '' || /^more:\s*cat\s+README\.txt/i.test(l) ||
+    /^to see what i was doing/i.test(l) || /^\s*ls\s+NOW\s*$/i.test(l) || /^\s*cat\s+NOW\//i.test(l);
+}
 function parseNow(raw) {
   const lines = String(raw == null ? '' : raw).replace(/\r/g, '').split('\n');
   const m = /last updated:\s*(.+)/i.exec(lines[0] || '');
   let body = lines.slice(m ? 1 : 0);
   while (body.length && body[0].trim() === '') body.shift();
-  while (body.length && (body[body.length - 1].trim() === '' ||
-    /^more:\s*cat\s+README\.txt/i.test(body[body.length - 1]))) body.pop();
+  while (body.length && isFooterLine(body[body.length - 1])) body.pop();
   return { date: (m ? m[1].trim() : '') || todayLabel(), content: body.join('\n'), raw: raw };
 }
 
 function listWas() {
-  if (!fs.existsSync(WAS_DIR)) return [];
-  return fs.readdirSync(WAS_DIR)
-    .filter((f) => /^NOW-.*\.txt$/.test(f))
+  if (!fs.existsSync(NOW_DIR)) return [];
+  return fs.readdirSync(NOW_DIR)
+    .filter((f) => /-NOW\.txt$/.test(f))
     .sort((a, b) => b.localeCompare(a))
     .map((name) => {
-      const raw = fs.readFileSync(path.join(WAS_DIR, name), 'utf8');
+      const raw = fs.readFileSync(path.join(NOW_DIR, name), 'utf8');
       return { name: name, date: parseNow(raw).date, raw: raw };
     });
 }
@@ -314,9 +328,9 @@ const server = http.createServer(async (req, res) => {
         const iso = archiveDateFor(current, NOW_FILE);
         const dest = uniqueArchivePath(iso);
         fs.writeFileSync(dest.full, current, 'utf8');
-        archived = 'WAS/' + dest.name;
+        archived = 'NOW/' + dest.name;
       }
-      fs.writeFileSync(NOW_FILE, buildNowText(date, body.content), 'utf8');
+      fs.writeFileSync(NOW_FILE, buildNowText(date, body.content, latestArchiveName()), 'utf8');
       const built = runBuild();
       const git = gitPublish('now: publish ' + date + (archived ? ' (archived ' + archived + ')' : ''));
       return send(res, 200, { ok: true, archived: archived, built: built, git: git, now: parseNow(readNow()) });
@@ -326,7 +340,7 @@ const server = http.createServer(async (req, res) => {
       // EDIT in place — no archive.
       const body = await readBody(req);
       const date = String(body.date || todayLabel()).trim();
-      fs.writeFileSync(NOW_FILE, buildNowText(date, body.content), 'utf8');
+      fs.writeFileSync(NOW_FILE, buildNowText(date, body.content, latestArchiveName()), 'utf8');
       const built = runBuild();
       const git = gitPublish('now: edit ' + date);
       return send(res, 200, { ok: true, built: built, git: git, now: parseNow(readNow()) });
@@ -334,8 +348,8 @@ const server = http.createServer(async (req, res) => {
 
     if (p === '/api/was' && method === 'PUT') {
       const name = u.searchParams.get('name') || '';
-      if (!/^NOW-[\w.-]+\.txt$/.test(name)) return send(res, 400, { error: 'bad archive name' });
-      const full = path.join(WAS_DIR, name);
+      if (!/-NOW\.txt$/.test(name) || /[\/\\]/.test(name)) return send(res, 400, { error: 'bad archive name' });
+      const full = path.join(NOW_DIR, name);
       if (!fs.existsSync(full)) return send(res, 404, { error: 'archive not found: ' + name });
       const body = await readBody(req);
       const date = String(body.date || parseNow(fs.readFileSync(full, 'utf8')).date).trim();
@@ -388,7 +402,7 @@ server.listen(PORT, () => {
   console.log('now-admin server.js listening on http://localhost:' + PORT);
   console.log('  root:      ' + ROOT);
   console.log('  NOW.txt:   ' + path.relative(ROOT, NOW_FILE));
-  console.log('  archive:   ' + path.relative(ROOT, WAS_DIR) + '/');
+  console.log('  archive:   ' + path.relative(ROOT, NOW_DIR) + '/');
   console.log('  auth:      ' + (TOKEN ? 'X-Admin-Token required' : 'OPEN (set ADMIN_TOKEN to lock down)'));
   console.log('  git push:  ' + (NO_GIT ? 'disabled (NO_GIT=1)' : 'enabled'));
   console.log('  deploy:    ' + (NO_DEPLOY ? 'disabled (NO_DEPLOY=1)' : 'update-production.sh after push'));

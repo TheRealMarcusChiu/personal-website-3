@@ -2063,7 +2063,7 @@ class Component extends DCLogic {
     // ============================================================
     //  ADMIN MODE  —  Cmd/Ctrl+E  ·  compose & publish NOW.txt
     //  Talks to server.js (configurable endpoint). On publish the
-    //  server archives the old NOW.txt into WAS/, rebuilds ./root,
+    //  server archives the old NOW.txt into NOW/, rebuilds ./root,
     //  and commits + pushes. See server.js.
     // ============================================================
     const A = {
@@ -2079,16 +2079,29 @@ class Component extends DCLogic {
     try { adminEndpoint = localStorage.getItem(ADMIN_EP_KEY) || adminEndpoint; adminToken = localStorage.getItem(ADMIN_TK_KEY) || ''; } catch (e) {}
 
     const NOW_FOOTER = 'more: cat README.txt';
-    const buildNowText = (date, content) =>
-      'last updated: ' + String(date).trim() + '\n\n' +
-      String(content).replace(/\s+$/, '') + '\n\n' + NOW_FOOTER + '\n';
+    // footer lines that are auto-generated and must never leak into editable content
+    const isFooterLine = (l) => l.trim() === '' || /^more:\s*cat\s+README\.txt/i.test(l) ||
+      /^to see what i was doing/i.test(l) || /^\s*ls\s+NOW\s*$/i.test(l) || /^\s*cat\s+NOW\//i.test(l);
+    const buildNowText = (date, content, archiveHint) => {
+      let footer = '';
+      if (archiveHint) footer += 'to see what I was doing:\n  ls NOW\n  cat NOW/' + archiveHint + '\n\n';
+      footer += NOW_FOOTER;
+      return 'last updated: ' + String(date).trim() + '\n\n' +
+        String(content).replace(/\s+$/, '') + '\n\n' + footer + '\n';
+    };
     const parseNow = (raw) => {
       const lines = String(raw == null ? '' : raw).replace(/\r/g, '').split('\n');
       const m = /last updated:\s*(.+)/i.exec(lines[0] || '');
       let body = lines.slice(m ? 1 : 0);
       while (body.length && body[0].trim() === '') body.shift();
-      while (body.length && (body[body.length - 1].trim() === '' || /^more:\s*cat\s+README\.txt/i.test(body[body.length - 1]))) body.pop();
+      while (body.length && isFooterLine(body[body.length - 1])) body.pop();
       return { date: (m ? m[1].trim() : '') || todayLabel(), content: body.join('\n') };
+    };
+    // ISO date (YYYY-MM-DD) from a "July 1, 2026" style label
+    const isoFromLabel = (label) => {
+      const d = new Date(String(label)); if (isNaN(d.getTime())) return null;
+      const p = (n) => String(n).padStart(2, '0');
+      return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
     };
 
     const el = (tag, css, props) => { const n = document.createElement(tag); if (css) n.style.cssText = css; if (props) Object.assign(n, props); return n; };
@@ -2102,9 +2115,16 @@ class Component extends DCLogic {
     const embeddedNow = () => { try { return window.__ROOT__.files['home/marcus/NOW.txt']; } catch (e) { return null; } };
     const embeddedWas = () => {
       const out = [];
-      try { const f = window.__ROOT__.files; Object.keys(f).forEach((k) => { const mm = /^home\/marcus\/WAS\/(.+)$/.exec(k); if (mm) out.push({ name: mm[1], raw: f[k] }); }); } catch (e) {}
+      try { const f = window.__ROOT__.files; Object.keys(f).forEach((k) => { const mm = /^home\/marcus\/NOW\/(.+)$/.exec(k); if (mm) out.push({ name: mm[1], raw: f[k] }); }); } catch (e) {}
       out.sort((a, b) => b.name.localeCompare(a.name));
       return out;
+    };
+    // filename of the archive the new NOW.txt footer should point at (for the preview)
+    const archiveHintName = () => {
+      const names = embeddedWas().map((w) => w.name);
+      if (mode.kind === 'new') { const iso = isoFromLabel(parseNow(embeddedNow()).date); if (iso) names.push(iso + '-NOW.txt'); }
+      names.sort((a, b) => b.localeCompare(a));
+      return names[0] || null;
     };
     const api = async (method, p, body) => {
       const base = normEndpoint(adminEndpoint) || 'http://localhost:8787';
@@ -2133,7 +2153,7 @@ class Component extends DCLogic {
 
     const renderPreview = () => {
       if (!ui.preview) return;
-      const text = (mode.kind === 'readme' || mode.kind === 'file') ? ui.content.value : buildNowText(ui.date.value, ui.content.value);
+      const text = (mode.kind === 'readme' || mode.kind === 'file') ? ui.content.value : buildNowText(ui.date.value, ui.content.value, archiveHintName());
       ui.preview.textContent = '';
       const lines = text.split('\n');
       lines.forEach((line, i) => {
@@ -2211,7 +2231,7 @@ class Component extends DCLogic {
       }
       if (m.kind === 'new') {
         ui.modeLabel.textContent = 'new entry';
-        ui.modeHint.textContent = 'publishing archives the current NOW.txt into WAS/, then rebuilds & pushes.';
+        ui.modeHint.textContent = 'publishing archives the current NOW.txt into NOW/, then rebuilds & pushes.';
         ui.date.value = todayLabel(); ui.content.value = ''; ui.content.disabled = false; ui.date.disabled = false;
         ui.action.textContent = 'Publish new →'; ui.action.style.cssText = btnStyle(true);
         renderPreview(); ui.content.focus();
