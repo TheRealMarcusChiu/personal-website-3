@@ -18,6 +18,7 @@
  *   GIT_BRANCH=main      branch to push (default: current branch)
  *   GIT_REMOTE=origin    remote to push to (default origin)
  *   NO_GIT=1             skip the git commit/push step (handy for local testing)
+ *   NO_DEPLOY=1          skip the post-push deploy hook (update-production.sh)
  *   NO_BUILD=1           skip running build.js
  *
  * No npm dependencies — Node standard library only.
@@ -47,6 +48,7 @@ const NOW_FILE = path.join(MARCUS_DIR, 'NOW.txt');
 const README_FILE = path.join(MARCUS_DIR, 'README.txt');
 const WAS_DIR = path.join(MARCUS_DIR, 'WAS');
 const BUILD_JS = path.join(__dirname, 'build.js');   // build.js sits next to this file in ./server
+const DEPLOY_SH = path.join(__dirname, 'update-production.sh');   // ssh to the web box + git pull
 
 const PORT = parseInt(process.env.PORT || '8787', 10);
 const TOKEN = process.env.ADMIN_TOKEN || '';
@@ -55,6 +57,7 @@ const GIT_BRANCH = process.env.GIT_BRANCH || '';
 const GIT_REMOTE = process.env.GIT_REMOTE || 'origin';
 const NO_GIT = process.env.NO_GIT === '1';
 const NO_BUILD = process.env.NO_BUILD === '1';
+const NO_DEPLOY = process.env.NO_DEPLOY === '1';
 const VERSION = 'now-admin/1.0';
 
 const NOW_FOOTER = 'more: cat README.txt';
@@ -126,6 +129,20 @@ function runBuild() {
   }
 }
 
+// After a successful push, tell the production web box to pull the new commit.
+// Never throws — a deploy failure shouldn't undo the (already-pushed) commit.
+function runDeploy() {
+  if (NO_DEPLOY) return 'deploy skipped';
+  if (!fs.existsSync(DEPLOY_SH)) return 'deploy script missing';
+  try {
+    run('bash', [DEPLOY_SH]);
+    return 'deployed';
+  } catch (e) {
+    const detail = (e.stderr || e.stdout || e.message || '').toString().trim().split('\n').slice(-2).join(' ');
+    return 'deploy hook failed: ' + detail;
+  }
+}
+
 // git add -A ; commit ; push. Returns a short human summary; never throws.
 function gitPublish(message) {
   if (NO_GIT) return 'git skipped';
@@ -136,7 +153,9 @@ function gitPublish(message) {
     run('git', ['commit', '-m', message]);
     const branch = GIT_BRANCH || run('git', ['rev-parse', '--abbrev-ref', 'HEAD']);
     run('git', ['push', GIT_REMOTE, branch]);
-    return 'committed & pushed to ' + GIT_REMOTE + '/' + branch;
+    // push succeeded — trigger the production deploy (ssh + git pull on the web box)
+    const deploy = runDeploy();
+    return 'committed & pushed to ' + GIT_REMOTE + '/' + branch + (deploy ? ' · ' + deploy : '');
   } catch (e) {
     const detail = (e.stderr || e.stdout || e.message || '').toString().trim().split('\n').slice(-2).join(' ');
     return 'git error: ' + detail;
@@ -289,5 +308,6 @@ server.listen(PORT, () => {
   console.log('  archive:   ' + path.relative(ROOT, WAS_DIR) + '/');
   console.log('  auth:      ' + (TOKEN ? 'X-Admin-Token required' : 'OPEN (set ADMIN_TOKEN to lock down)'));
   console.log('  git push:  ' + (NO_GIT ? 'disabled (NO_GIT=1)' : 'enabled'));
+  console.log('  deploy:    ' + (NO_DEPLOY ? 'disabled (NO_DEPLOY=1)' : 'update-production.sh after push'));
   console.log('  build.js:  ' + (NO_BUILD ? 'disabled (NO_BUILD=1)' : 'enabled'));
 });
