@@ -2092,6 +2092,13 @@ class Component extends DCLogic {
     };
 
     const el = (tag, css, props) => { const n = document.createElement(tag); if (css) n.style.cssText = css; if (props) Object.assign(n, props); return n; };
+    // normalize a user-entered endpoint: trim, add scheme if omitted, drop trailing slashes
+    const normEndpoint = (v) => {
+      let s = String(v == null ? '' : v).trim();
+      if (!s) return '';
+      if (!/^https?:\/\//i.test(s)) s = 'https://' + s.replace(/^\/+/, '');
+      return s.replace(/\/+$/, '');
+    };
     const embeddedNow = () => { try { return window.__ROOT__.files['home/marcus/NOW.txt']; } catch (e) { return null; } };
     const embeddedWas = () => {
       const out = [];
@@ -2100,8 +2107,9 @@ class Component extends DCLogic {
       return out;
     };
     const api = async (method, p, body) => {
-      const base = String(adminEndpoint).replace(/\/+$/, '');
-      const res = await fetch(base + p, {
+      const base = normEndpoint(adminEndpoint) || 'http://localhost:8787';
+      const path = p.charAt(0) === '/' ? p : '/' + p;   // guarantee the separator slash
+      const res = await fetch(base + path, {
         method: method,
         headers: Object.assign({ 'Content-Type': 'application/json' }, adminToken ? { 'X-Admin-Token': adminToken } : {}),
         body: body ? JSON.stringify(body) : undefined
@@ -2125,7 +2133,17 @@ class Component extends DCLogic {
 
     const renderPreview = () => {
       if (!ui.preview) return;
-      ui.preview.textContent = (mode.kind === 'readme' || mode.kind === 'file') ? ui.content.value : buildNowText(ui.date.value, ui.content.value);
+      const text = (mode.kind === 'readme' || mode.kind === 'file') ? ui.content.value : buildNowText(ui.date.value, ui.content.value);
+      ui.preview.textContent = '';
+      const lines = text.split('\n');
+      lines.forEach((line, i) => {
+        segsFromLine(line).forEach((seg) => {
+          if (typeof seg === 'string') { ui.preview.appendChild(document.createTextNode(seg)); return; }
+          const a = el('span', 'color:' + A.accent + ';font-weight:700;', { textContent: seg.t });
+          ui.preview.appendChild(a);
+        });
+        if (i < lines.length - 1) ui.preview.appendChild(document.createTextNode('\n'));
+      });
     };
 
     const setMode = async (m) => {
@@ -2312,15 +2330,17 @@ class Component extends DCLogic {
     };
 
     const saveConfig = () => {
-      adminEndpoint = ui.endpoint.value.trim() || 'http://localhost:8787';
+      adminEndpoint = normEndpoint(ui.endpoint.value) || 'http://localhost:8787';
       try { localStorage.setItem(ADMIN_EP_KEY, adminEndpoint); } catch (e) {}
       ui.endpoint.value = adminEndpoint;
       setStatus('endpoint saved: ' + adminEndpoint, A.ok);
       refreshList();
     };
     const testConfig = async () => {
-      setStatus('pinging ' + ui.endpoint.value.trim() + '…');
-      const savedEp = adminEndpoint; adminEndpoint = ui.endpoint.value.trim() || savedEp;
+      const ep = normEndpoint(ui.endpoint.value);
+      ui.endpoint.value = ep;
+      setStatus('pinging ' + ep + '…');
+      const savedEp = adminEndpoint; adminEndpoint = ep || savedEp;
       try { const h = await api('GET', '/api/health'); setStatus('✓ server reachable' + (h && h.version ? ' · ' + h.version : ''), A.ok); }
       catch (e) { setStatus('✗ no response: ' + e.message, A.err); }
     };
