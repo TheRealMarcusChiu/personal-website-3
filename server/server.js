@@ -115,8 +115,15 @@ function run(cmd, args) {
 
 function runBuild() {
   if (NO_BUILD) return 'build skipped';
-  run(process.execPath, [BUILD_JS]);   // same node binary that runs this server (nvm-safe under systemd)
-  return 'built';
+  try {
+    // Regenerate root/manifest.json + root/fs.js from the (just-mutated) ./root tree.
+    const out = run(process.execPath, [BUILD_JS]);   // same node binary that runs this server (nvm-safe under systemd)
+    const m = /\((\d+) files embedded\)/.exec(out);
+    return m ? ('built · ' + m[1] + ' files' ) : 'built';
+  } catch (e) {
+    const detail = (e.stderr || e.stdout || e.message || '').toString().trim().split('\n').slice(-2).join(' ');
+    throw new Error('build.js failed: ' + detail);
+  }
 }
 
 // git add -A ; commit ; push. Returns a short human summary; never throws.
