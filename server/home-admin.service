@@ -1,0 +1,53 @@
+# home-admin.service — runs the /now admin backend (server/server.js)
+#
+# Target: a Proxmox LXC Ubuntu container.
+#
+# Install:
+#   sudo cp server/home-admin.service /etc/systemd/system/home-admin.service
+#   # edit WorkingDirectory / User / paths below to match your checkout, then:
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now home-admin.service
+#   sudo systemctl status home-admin.service
+#   journalctl -u home-admin.service -f      # follow logs
+#
+# The service listens on 0.0.0.0:9006 (remote connections allowed). Open the port
+# on the container/host firewall, and point the admin panel's endpoint at
+# http://<container-ip>:9006
+
+[Unit]
+Description=marcus@home — /now admin backend (server.js)
+Documentation=https://git.marcuschiu.com
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+
+# Proxmox Ubuntu LXC templates default to the root user; change if you run as another.
+User=root
+Group=root
+
+# Absolute path to the repo checkout (the project root, NOT the server/ subdir).
+# Matches `cd personal-website-3/` from update-production.sh (root's home).
+WorkingDirectory=/root/personal-website-3
+
+# Listen on all interfaces so the container is reachable remotely.
+Environment=PORT=9006
+Environment=HOST=0.0.0.0
+Environment=ALLOW_ORIGIN=*
+# Lock down writes with a shared secret (also set it in the admin panel's token field):
+# Environment=ADMIN_TOKEN=change-me
+# Skip git push while testing:
+# Environment=NO_GIT=1
+
+# Use the full path to node (adjust if you installed via nvm/fnm, e.g. /usr/local/bin/node).
+ExecStart=/usr/bin/node server/server.js
+
+Restart=on-failure
+RestartSec=3
+# Surface logs via journalctl
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

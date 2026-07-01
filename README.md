@@ -28,11 +28,11 @@ browser between visits.
 | `root/` | the virtual filesystem you walk around in |
 | `root/fs.js` | the filesystem embedded as JS so `cat` works from `file://` too |
 | `support.js` | the tiny component runtime |
-| `build.js` | walks `./root` and regenerates `manifest.json` + `root/fs.js` |
-| `server.js` | optional admin backend for publishing `NOW.txt` (see below) |
+| `build.js` | (in `server/`) walks `./root` and regenerates `manifest.json` + `root/fs.js` |
+| `server/server.js` | optional admin backend for publishing `NOW.txt` (see below) |
 
 No build step to run it — open `index.html` and it boots. After editing anything
-under `./root`, run `node build.js` to regenerate the filesystem bundle.
+under `./root`, run `node server/build.js` to regenerate the filesystem bundle.
 
 ## the terminal
 
@@ -66,7 +66,7 @@ the panel; saved to `localStorage`, with an optional token). Three actions:
 - **New NOW** — pick a date (defaults to today) + content, then **Publish**. The
   server archives the current `NOW.txt` into `root/home/marcus/WAS/NOW-YYYY-MM-DD.txt`
   (the date parsed from its first `last updated:` line), writes the new one,
-  reruns `build.js`, and `git commit && git push`.
+  reruns `server/build.js`, and `git commit && git push`.
 - **Edit current** — overwrite `NOW.txt` in place (no archive).
 - **Edit archive** — fix up any past `WAS/` entry.
 - **README.txt** — edit the site's intro (freeform, no date), rebuild & push.
@@ -74,9 +74,9 @@ the panel; saved to `localStorage`, with an optional token). Three actions:
 Run the backend alongside the static site:
 
 ```
-node server.js                 # http://localhost:8787
-ADMIN_TOKEN=secret node server.js   # require X-Admin-Token on writes
-NO_GIT=1 node server.js        # test locally without pushing
+node server/server.js                 # http://localhost:8787
+ADMIN_TOKEN=secret node server/server.js   # require X-Admin-Token on writes
+NO_GIT=1 node server/server.js        # test locally without pushing
 ```
 
 Std-lib only, no dependencies. Serving the page over `https` while pointing at

@@ -16,12 +16,13 @@
 //                        file:// (Chrome blocks fetch() of local files, but lets
 //                        <script src> load them).
 //
-// Run `node build.js` after editing anything under ./root, before committing.
+// Run `node server/build.js` (from the project root) after editing anything under
+// ./root, before committing.
 
 const fs = require('fs');
 const path = require('path');
 
-const ROOT_DIR = path.join(__dirname, 'root');
+const ROOT_DIR = path.join(__dirname, '..', 'root');   // build.js lives in ./server; the fs it walks is ../root
 const MANIFEST = path.join(ROOT_DIR, 'manifest.json');
 const BUNDLE = path.join(ROOT_DIR, 'fs.js');
 

@@ -5,11 +5,11 @@
  * The static terminal site (index.html) enters "admin mode" with Cmd/Ctrl+E and
  * posts here to compose & publish NOW.txt. On every write this server:
  *   1. mutates files under ./root (archiving the old NOW.txt into ./root/home/marcus/WAS/)
- *   2. runs `node build.js` to regenerate root/manifest.json + root/fs.js
+ *   2. runs `node server/build.js` to regenerate root/manifest.json + root/fs.js
  *   3. git add / commit / push   (so GitHub Pages redeploys)
  *
  * Run:
- *   node server.js
+ *   node server/server.js         (from the project root)
  *
  * Env vars (all optional):
  *   PORT=8787            port to listen on
@@ -41,12 +41,12 @@ const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
 
-const ROOT = __dirname;
+const ROOT = path.join(__dirname, '..');   // project root (server.js lives in ./server)
 const MARCUS_DIR = path.join(ROOT, 'root', 'home', 'marcus');
 const NOW_FILE = path.join(MARCUS_DIR, 'NOW.txt');
 const README_FILE = path.join(MARCUS_DIR, 'README.txt');
 const WAS_DIR = path.join(MARCUS_DIR, 'WAS');
-const BUILD_JS = path.join(ROOT, 'build.js');
+const BUILD_JS = path.join(__dirname, 'build.js');   // build.js sits next to this file in ./server
 
 const PORT = parseInt(process.env.PORT || '8787', 10);
 const TOKEN = process.env.ADMIN_TOKEN || '';

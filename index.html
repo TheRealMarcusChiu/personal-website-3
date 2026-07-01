@@ -90,7 +90,7 @@ class Component extends DCLogic {
     // A static site can't list directories over HTTP, so build.js emits
     // root/manifest.json describing the tree shape. File CONTENTS are not in
     // the manifest — they're fetched from ./root on demand (see cat / README).
-    // Edit anything under ./root, then re-run `node build.js` before deploying.
+    // Edit anything under ./root, then re-run `node server/build.js` before deploying.
     const ROOT_BASE = 'root';
     let ROOT = { type: 'dir', children: {} };   // replaced by loadManifest()
     let LINKS = {};                              // filename -> url, from exec nodes
