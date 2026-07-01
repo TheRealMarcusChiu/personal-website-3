@@ -7,5 +7,6 @@ NOW
   - https://git.marcuschiu.com/images  - an archive of stuff stolen from the internet 
 - reading `The Blessing of Humility` ~ Jerry Bridges
 - setting up 100Gb network for homelab
+- training for 1RM 135lb weight pullup
 
 more: cat README.txt
