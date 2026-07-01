@@ -24,12 +24,15 @@ browser between visits.
 
 | path | what |
 | --- | --- |
-| `public/index.html` | the entire site — terminal, vim, filesystem, the lot |
-| `public/root/` | the virtual filesystem you walk around in |
-| `public/root/fs.js` | the filesystem embedded as JS so `cat` works from `file://` too |
-| `public/support.js` | the tiny component runtime |
+| `index.html` | the entire site — terminal, vim, filesystem, the lot |
+| `root/` | the virtual filesystem you walk around in |
+| `root/fs.js` | the filesystem embedded as JS so `cat` works from `file://` too |
+| `support.js` | the tiny component runtime |
+| `build.js` | walks `./root` and regenerates `manifest.json` + `root/fs.js` |
+| `server.js` | optional admin backend for publishing `NOW.txt` (see below) |
 
-No build step to run it — open `public/index.html` and it boots.
+No build step to run it — open `index.html` and it boots. After editing anything
+under `./root`, run `node build.js` to regenerate the filesystem bundle.
 
 ## the terminal
 
@@ -40,13 +43,52 @@ built-ins are safe.
 
 <kbd>Tab</kbd> completes · <kbd>↑</kbd> <kbd>↓</kbd> walk history · <kbd>Ctrl</kbd>+<kbd>L</kbd> clears · `vim` then `:wq` to save.
 
+## the /now page
+
+Visiting **`/now`** (or `?now` / `#now`) auto-runs `cat NOW.txt` on boot instead of
+the README — a snapshot of what I'm currently focused on. `NOW.txt` always looks
+like:
+
+```
+last updated: July 1, 2026
+
+…what I'm working on…
+
+more: cat README.txt
+```
+
+## admin mode
+
+Press <kbd>Cmd</kbd>/<kbd>Ctrl</kbd>+<kbd>E</kbd> to open an admin panel that composes and
+publishes `NOW.txt`. It talks to `server.js` over a configurable endpoint (set it in
+the panel; saved to `localStorage`, with an optional token). Three actions:
+
+- **New NOW** — pick a date (defaults to today) + content, then **Publish**. The
+  server archives the current `NOW.txt` into `root/home/marcus/WAS/NOW-YYYY-MM-DD.txt`
+  (the date parsed from its first `last updated:` line), writes the new one,
+  reruns `build.js`, and `git commit && git push`.
+- **Edit current** — overwrite `NOW.txt` in place (no archive).
+- **Edit archive** — fix up any past `WAS/` entry.
+- **README.txt** — edit the site's intro (freeform, no date), rebuild & push.
+
+Run the backend alongside the static site:
+
+```
+node server.js                 # http://localhost:8787
+ADMIN_TOKEN=secret node server.js   # require X-Admin-Token on writes
+NO_GIT=1 node server.js        # test locally without pushing
+```
+
+Std-lib only, no dependencies. Serving the page over `https` while pointing at
+`http://localhost` works thanks to the browser's localhost exception; for a remote
+box, front `server.js` with https.
+
 ## secrets
 
 There are a handful. `help` won't list them — that's the point[.](https://marcuschiu.com)
 
-A few breadcrumbs: the site has a pulse if you're idle, a sealed `/root` you can't
-read yet, and a `console` that talks back if you open DevTools. Real terminals
-reward curiosity; so does this one.
+A few breadcrumbs: a sealed `/root` you can't read yet, and a `console` that talks
+back if you open DevTools. Real terminals reward curiosity; so does this one.
 
 <details>
 <summary>I gave up — show me (spoilers, obviously)</summary>
@@ -105,7 +147,6 @@ many of the ~27 secrets you've found (`12/27`, the rest shown as `???`, persiste
 **Triggers & ambient effects**
 
 - Konami code (↑↑↓↓←→←→ B A — or a gamepad) → toggles green-phosphor mode
-- idle screensaver → matrix rain after 60s of stillness
 - `rm -rf /` (and `~`, `.`) → dramatic fake deletion + screen glitch, then "just kidding" — deletes nothing
 - phosphor ghosting when you `clear` · a time-aware greeting + visit-count milestones · low-battery "running on fumes"
 - mobile: shake to `degauss`, tilt to slide the warm glow

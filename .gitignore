@@ -1,9 +1,18 @@
-# macOS
+# Dependencies
+node_modules/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
 .DS_Store
-.AppleDouble
-.LSOverride
-Icon
+.DS_Store?
 ._*
+Thumbs.db
+desktop.ini
 
 # Editor / IDE
 .vscode/
@@ -12,18 +21,12 @@ Icon
 *.swo
 *~
 
-# Node / tooling (if added later)
-node_modules/
-npm-debug.log*
-yarn-error.log*
-.cache/
-dist/
-build/
-
 # Environment / secrets
 .env
-.env.*
-*.local
+.env.local
+.env.*.local
 
-# Logs
-*.log
+# Misc
+*.tmp
+.cache/
+.thumbnail
