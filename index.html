@@ -2130,6 +2130,21 @@ class Component extends DCLogic {
 
     const setMode = async (m) => {
       mode = m; setStatus('');
+      // reflect which toolbar create-action is the current mode (muted + unclickable)
+      if (ui.newNow && ui.newFile) {
+        const setActive = (b, on) => {
+          b.dataset.active = on ? '1' : '0';
+          b.style.color = A.accent;
+          b.style.cursor = on ? 'default' : 'pointer';
+          b.style.textDecoration = 'none';
+          b.style.background = on ? A.line2 : 'transparent';
+          b.style.border = on ? ('1px solid ' + A.line) : '1px solid transparent';
+          b.style.borderRadius = '999px';
+          b.style.padding = '6px 12px';
+        };
+        setActive(ui.newNow, m.kind === 'new');
+        setActive(ui.newFile, m.kind === 'file' && !m.name);
+      }
       // highlight list selection
       Array.from(ui.list.children).forEach((c) => { if (c.dataset && c.dataset.key) c.style.background = (c.dataset.key === (m.kind + (m.name ? ':' + m.name : ''))) ? A.line2 : 'transparent'; });
       // reset shared fields to their NOW defaults; each branch overrides as needed
@@ -2206,9 +2221,6 @@ class Component extends DCLogic {
     };
 
     const refreshList = async () => {
-      const items = [];
-      items.push({ key: 'new', label: '＋  New NOW', accent: true });
-      items.push({ key: 'current', label: 'Current NOW.txt' });
       let was = [];
       try { was = (await api('GET', '/api/was')).items || []; }
       catch (e) { was = embeddedWas(); }
@@ -2217,34 +2229,52 @@ class Component extends DCLogic {
       catch (e) {
         try { files = Object.keys(window.__ROOT__.files).filter((k) => k !== 'manifest.json' && k !== 'fs.js').sort().map((k) => ({ path: k })); } catch (e2) {}
       }
-      // WAS archives live in their own section; don't repeat them under All files
+      // archives have their own group above; everything else (incl. NOW.txt & README.txt)
+      // lists naturally at its real path, like .bashrc / .profile
       files = files.filter((f) => !/(^|\/)WAS\//.test(f.path));
       ui.list.innerHTML = '';
       const mk = (it) => {
-        const row = el('div', 'padding:8px 11px;border-radius:6px;cursor:pointer;font:' + (it.accent ? '600' : '400') + ' 12.5px/1.3 \'JetBrains Mono\',monospace;color:' + (it.accent ? A.accent : A.text) + ';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;');
-        row.textContent = it.label; row.dataset.key = it.key;
+        const pad = 'padding:8px 11px;' + (it.indent ? 'padding-left:' + it.indent + 'px;' : '');
+        const col = it.accent ? A.accent : (it.dim ? A.dim : A.text);
+        const row = el('div', pad + 'border-radius:6px;cursor:pointer;font:' + (it.accent ? '600' : '400') + ' 12.5px/1.3 \'JetBrains Mono\',monospace;color:' + col + ';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;');
+        row.textContent = it.label; if (it.key) row.dataset.key = it.key;
         row.onmouseenter = () => { if (row.dataset.key !== (mode.kind + (mode.name ? ':' + mode.name : ''))) row.style.background = A.line2; };
         row.onmouseleave = () => { if (row.dataset.key !== (mode.kind + (mode.name ? ':' + mode.name : ''))) row.style.background = 'transparent'; };
         row.onclick = it.onclick;
         return row;
       };
-      ui.list.appendChild(mk({ key: 'new', label: '＋  New NOW', accent: true, onclick: () => setMode({ kind: 'new' }) }));
-      ui.list.appendChild(mk({ key: 'current', label: 'Current NOW.txt', onclick: () => setMode({ kind: 'current' }) }));
-      ui.list.appendChild(mk({ key: 'readme', label: 'README.txt', onclick: () => setMode({ kind: 'readme' }) }));
       if (was.length) {
         const hd = el('div', 'padding:14px 11px 5px;font:400 10.5px/1 \'JetBrains Mono\',monospace;letter-spacing:.04em;color:' + A.faint + ';');
-        hd.textContent = 'WAS · archive'; ui.list.appendChild(hd);
+        hd.textContent = 'archive'; ui.list.appendChild(hd);
       }
       was.forEach((w) => {
         const label = w.name.replace(/\.txt$/, '');
         ui.list.appendChild(mk({ key: 'was:' + w.name, label: label, onclick: () => setMode({ kind: 'was', name: w.name }) }));
       });
-      const fhd = el('div', 'padding:14px 11px 5px;font:400 10.5px/1 \'JetBrains Mono\',monospace;letter-spacing:.04em;color:' + A.faint + ';');
-      fhd.textContent = 'ALL FILES · root/'; ui.list.appendChild(fhd);
-      ui.list.appendChild(mk({ key: 'file', label: '＋  New file', accent: true, onclick: () => setMode({ kind: 'file' }) }));
+      // build a nested tree from the flat file paths, then render it collapsibly
+      const collapsed = ui._collapsed || (ui._collapsed = new Set());
+      const tree = {};
       files.forEach((f) => {
-        ui.list.appendChild(mk({ key: 'file:' + f.path, label: f.path, onclick: () => setMode({ kind: 'file', name: f.path }) }));
+        const parts = f.path.split('/'); let node = tree;
+        parts.forEach((part, i) => {
+          if (i === parts.length - 1) { node[part] = { file: true, name: part, path: f.path }; }
+          else { const dp = parts.slice(0, i + 1).join('/'); node[part] = node[part] || { dir: true, name: part, path: dp, children: {} }; node = node[part].children; }
+        });
       });
+      const renderTree = (obj, depth) => {
+        Object.values(obj).sort((a, b) => (a.dir === b.dir) ? a.name.localeCompare(b.name) : (a.dir ? -1 : 1)).forEach((node) => {
+          const indent = 11 + depth * 14;
+          if (node.dir) {
+            const open = !collapsed.has(node.path);
+            const row = mk({ label: (open ? '▾ ' : '▸ ') + node.name + '/', indent: indent, dim: true, onclick: () => { open ? collapsed.add(node.path) : collapsed.delete(node.path); refreshList(); } });
+            ui.list.appendChild(row);
+            if (open) renderTree(node.children, depth + 1);
+          } else {
+            ui.list.appendChild(mk({ key: 'file:' + node.path, label: node.name, indent: indent, onclick: () => setMode({ kind: 'file', name: node.path }) }));
+          }
+        });
+      };
+      renderTree(tree, 0);
       // re-apply selection highlight
       Array.from(ui.list.children).forEach((c) => { if (c.dataset && c.dataset.key) c.style.background = (c.dataset.key === (mode.kind + (mode.name ? ':' + mode.name : ''))) ? A.line2 : 'transparent'; });
     };
@@ -2315,16 +2345,30 @@ class Component extends DCLogic {
       back.appendChild(panel);
       back.addEventListener('mousedown', (e) => { if (e.target === back) closeAdmin(); });
 
-      // header
-      const head = el('div', 'display:flex;align-items:center;gap:8px;padding:14px 18px;border-bottom:1px solid ' + A.line2 + ';');
-      const title = el('div', 'font:400 12px/1 \'JetBrains Mono\',monospace;color:' + A.dim + ';letter-spacing:.02em;', { textContent: 'admin' });
+      // header — create actions on the left, settings/close on the right
+      const head = el('div', 'display:flex;align-items:center;gap:16px;padding:11px 16px;border-bottom:1px solid ' + A.line2 + ';');
+      const newNow = el('button', btnStyle(true), { textContent: '＋ New NOW.txt' }); ui.newNow = newNow;
+      const newFile = el('button', btnStyle(false) + 'color:' + A.accent + ';', { textContent: '＋ New file' }); ui.newFile = newFile;
+      newNow.onclick = () => { if (newNow.dataset.active !== '1') setMode({ kind: 'new' }); };
+      newFile.onclick = () => { if (newFile.dataset.active !== '1') setMode({ kind: 'file' }); };
+      [newNow, newFile].forEach((b) => {
+        b.onmouseenter = () => { if (b.dataset.active !== '1') { b.style.color = '#f6c469'; b.style.textDecoration = 'underline'; } };
+        b.onmouseleave = () => { if (b.dataset.active !== '1') { b.style.color = A.accent; b.style.textDecoration = 'none'; } };
+      });
       const spacer = el('div', 'flex:1;');
+      const gearBtn = el('button', 'appearance:none;border:none;background:none;color:' + A.dim + ';font:400 15px/1 \'JetBrains Mono\',monospace;padding:4px 6px;cursor:pointer;', { textContent: '⚙', title: 'server settings' });
+      gearBtn.onclick = () => {
+        const open = ui.cfg.style.display === 'none';
+        ui.cfg.style.display = open ? 'flex' : 'none';
+        gearBtn.style.color = open ? A.accent : A.dim;
+        if (open) ui.endpoint.focus();
+      };
       const closeBtn = el('button', btnStyle(false) + 'padding:4px 2px;', { textContent: 'esc' });
       closeBtn.onclick = closeAdmin;
-      head.append(title, spacer, closeBtn);
+      head.append(newNow, newFile, spacer, gearBtn, closeBtn);
 
-      // config bar
-      const cfg = el('div', 'display:flex;gap:16px;align-items:flex-end;padding:12px 18px;border-bottom:1px solid ' + A.line2 + ';flex-wrap:wrap;');
+      // config bar — hidden behind the gear; only shown when the user wants to change the endpoint
+      const cfg = el('div', 'display:none;gap:16px;align-items:flex-end;padding:12px 18px;border-bottom:1px solid ' + A.line2 + ';flex-wrap:wrap;'); ui.cfg = cfg;
       const epWrap = el('div', 'flex:2;min-width:220px;');
       epWrap.appendChild(el('div', 'font:400 10.5px/1.3 \'JetBrains Mono\',monospace;color:' + A.faint + ';margin-bottom:6px;', { textContent: 'server endpoint' }));
       ui.endpoint = el('input', inputStyle, { type: 'text', value: adminEndpoint, placeholder: 'http://localhost:8787', spellcheck: false, autocapitalize: 'off', autocomplete: 'off' });
@@ -2335,7 +2379,28 @@ class Component extends DCLogic {
 
       // body: list + editor
       const body = el('div', 'flex:1;display:flex;min-height:0;');
-      ui.list = el('div', 'width:210px;flex-shrink:0;border-right:1px solid ' + A.line2 + ';padding:9px;overflow-y:auto;');
+      const savedW = (function () { try { return parseInt(localStorage.getItem('mc_admin_sidebar_w'), 10); } catch (e) { return 0; } })();
+      ui.list = el('div', 'width:' + (savedW && savedW >= 140 ? savedW : 210) + 'px;flex-shrink:0;border-right:1px solid ' + A.line2 + ';padding:9px;overflow-y:auto;');
+      // drag handle — grab to resize the sidebar
+      const resizer = el('div', 'width:6px;flex-shrink:0;cursor:col-resize;margin-left:-3px;position:relative;z-index:2;transition:background .15s;');
+      resizer.onmouseenter = () => { resizer.style.background = A.line; };
+      resizer.onmouseleave = () => { resizer.style.background = 'transparent'; };
+      resizer.onmousedown = (e) => {
+        e.preventDefault();
+        const panelLeft = body.getBoundingClientRect().left;
+        const move = (ev) => {
+          let w = Math.round(ev.clientX - panelLeft);
+          w = Math.max(140, Math.min(w, body.clientWidth - 260));
+          ui.list.style.width = w + 'px';
+        };
+        const up = () => {
+          document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up);
+          document.body.style.userSelect = ''; document.body.style.cursor = '';
+          try { localStorage.setItem('mc_admin_sidebar_w', parseInt(ui.list.style.width, 10)); } catch (er) {}
+        };
+        document.body.style.userSelect = 'none'; document.body.style.cursor = 'col-resize';
+        document.addEventListener('mousemove', move); document.addEventListener('mouseup', up);
+      };
       const editor = el('div', 'flex:1;display:flex;flex-direction:column;min-width:0;padding:15px 17px;overflow-y:auto;gap:11px;');
 
       const modeRow = el('div', '');
@@ -2371,7 +2436,7 @@ class Component extends DCLogic {
       actionRow.append(ui.action, ui.delBtn, ui.status);
 
       editor.append(modeRow, dateRow, contentRow, prevRow, actionRow);
-      body.append(ui.list, editor);
+      body.append(ui.list, resizer, editor);
       panel.append(head, cfg, body);
       document.body.appendChild(back);
       ui.back = back;
@@ -2383,6 +2448,7 @@ class Component extends DCLogic {
       if (!adminBuilt) buildAdmin();
       ui.back.style.display = 'flex'; adminOpen = true;
       ui.endpoint.value = adminEndpoint;
+      if (ui.cfg) ui.cfg.style.display = 'none';
       refreshList(); setMode({ kind: 'new' });
     };
     const closeAdmin = () => { if (ui.back) ui.back.style.display = 'none'; adminOpen = false; if (input) input.focus(); };
