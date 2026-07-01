@@ -94,6 +94,20 @@ class Component extends DCLogic {
     const ROOT_BASE = 'root';
     let ROOT = { type: 'dir', children: {} };   // replaced by loadManifest()
     let LINKS = {};                              // filename -> url, from exec nodes
+    // The link scripts were removed from the visible filesystem, but README.txt
+    // still links to them by name — seed those URLs so the links keep working.
+    const README_LINKS = {
+      'linktree.sh': 'https://linktr.ee/marcuschiu',
+      'email.sh': 'mailto:marcuschiu9@gmail.com',
+      'code.sh': 'https://github.com/TheRealMarcusChiu',
+      'projects.sh': 'http://git.marcuschiu.com/projects/',
+      'quotes.sh': 'http://git.marcuschiu.com/quotes/',
+      'stuff.sh': 'http://git.marcuschiu.com/images/',
+      'tech.sh': 'http://git.marcuschiu.com/tech/',
+      'thoughts.sh': 'http://git.marcuschiu.com/thoughts/',
+      'var-log.sh': 'http://git.marcuschiu.com/var-log/',
+      'workouts.sh': 'http://git.marcuschiu.com/workouts/'
+    };
     const HOME = ['home', 'marcus'];
     let cwd = HOME.slice();
 
@@ -119,7 +133,7 @@ class Component extends DCLogic {
         else if (c.type === 'dir') collectLinks(c);
       }
     };
-    const applyManifest = (m) => { if (m) { ROOT = m; LINKS = {}; collectLinks(ROOT); } return m; };
+    const applyManifest = (m) => { if (m) { ROOT = m; LINKS = Object.assign({}, README_LINKS); collectLinks(ROOT); } return m; };
     const loadManifest = () => {
       if (EMBED && EMBED.manifest) return Promise.resolve(applyManifest(EMBED.manifest));
       return fetch(ROOT_BASE + '/manifest.json').then((r) => r.ok ? r.json() : null)
@@ -327,7 +341,7 @@ class Component extends DCLogic {
         : [['(could not load README.txt — serve this site over http, not file://)']];
       return README;
     });
-    const HINT = "tip: 'ls' to look around · './<name>.sh' opens a link · 'help' for commands";
+    const HINT = "tip: 'ls' to look around · 'cat <file>' to read · 'help' for commands";
 
     const linkSpan = (label, fileName) => {
       const a = document.createElement('a');

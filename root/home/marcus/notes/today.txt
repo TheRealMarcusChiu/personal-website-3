@@ -1,3 +1,0 @@
-- ship the terminal homepage
-- 40 min zone 2 + mobility
-- read: the unix programming environment

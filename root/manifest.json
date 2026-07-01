@@ -13,73 +13,11 @@
             ".profile": {
               "type": "file"
             },
-            "code.sh": {
-              "type": "exec",
-              "url": "https://github.com/TheRealMarcusChiu"
-            },
-            "email.sh": {
-              "type": "exec",
-              "url": "mailto:marcuschiu9@gmail.com"
-            },
-            "linktree.sh": {
-              "type": "exec",
-              "url": "https://linktr.ee/marcuschiu"
-            },
-            "notes": {
-              "type": "dir",
-              "children": {
-                "ideas.txt": {
-                  "type": "file"
-                },
-                "today.txt": {
-                  "type": "file"
-                },
-                "TODO.txt": {
-                  "type": "file"
-                }
-              }
-            },
             "NOW.txt": {
               "type": "file"
             },
-            "projects.sh": {
-              "type": "exec",
-              "url": "http://git.marcuschiu.com/projects/"
-            },
-            "quotes.sh": {
-              "type": "exec",
-              "url": "http://git.marcuschiu.com/quotes/"
-            },
             "README.txt": {
               "type": "readme"
-            },
-            "stuff.sh": {
-              "type": "exec",
-              "url": "http://git.marcuschiu.com/images/"
-            },
-            "tech.sh": {
-              "type": "exec",
-              "url": "http://git.marcuschiu.com/tech/"
-            },
-            "thoughts.sh": {
-              "type": "exec",
-              "url": "http://git.marcuschiu.com/thoughts/"
-            },
-            "var-log.sh": {
-              "type": "exec",
-              "url": "http://git.marcuschiu.com/var-log/"
-            },
-            "WAS": {
-              "type": "dir",
-              "children": {
-                "NOW-2026-06-30.txt": {
-                  "type": "file"
-                }
-              }
-            },
-            "workouts.sh": {
-              "type": "exec",
-              "url": "http://git.marcuschiu.com/workouts/"
             }
           }
         }
