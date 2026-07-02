@@ -27,9 +27,6 @@
             ".profile": {
               "type": "file"
             },
-            "NOW.txt": {
-              "type": "file"
-            },
             "README.txt": {
               "type": "readme"
             }
