@@ -3,7 +3,7 @@ last updated: July 1, 2026
 NOW
 - revamping outdated websites:
   - [www.marcuschiu.com](https://www.marcuschiu.com)          - this one
-  - [git.marcuschiu.com](https://git.marcuschiu.com/now)          - a live now 
+  - [git.marcuschiu.com/now](https://git.marcuschiu.com/now)       - a live now 
   - [git.marcuschiu.com/var-log](https://git.marcuschiu.com/var-log)  - a personal knowledge garden
   - [git.marcuschiu.com/images](https://git.marcuschiu.com/images)   - an archive of stolen stuff from the internet
   - [git.marcuschiu.com/quotes](https://git.marcuschiu.com/quotes)   - an archive of quotes
