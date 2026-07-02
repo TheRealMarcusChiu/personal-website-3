@@ -10,18 +10,18 @@
             ".bashrc": {
               "type": "file"
             },
-            ".profile": {
+            ".plan": {
               "type": "file"
             },
-            "NOW": {
+            ".plans": {
               "type": "dir",
               "children": {
-                "2026-07-01-NOW.txt": {
+                ".plan-2026-05-18": {
                   "type": "file"
                 }
               }
             },
-            "NOW.txt": {
+            ".profile": {
               "type": "file"
             },
             "README.txt": {

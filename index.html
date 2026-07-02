@@ -1166,7 +1166,7 @@ class Component extends DCLogic {
       rm: "NAME\n     rm -- remove files\nWARNING\n     `rm -rf /` is not a productivity tip.",
       neofetch: 'NAME\n     neofetch -- show system (and human) information in style',
       man: 'NAME\n     man -- you are here. very meta.',
-      marcus: 'NAME\n     marcus -- software person, present tense\nSYNOPSIS\n     marcus [--coffee] [--vim]\nDESCRIPTION\n     builds systems; trains mind and body; hoards quotes.\n     reach: marcuschiu9@gmail.com'
+      marcus: 'NAME\n     marcus -- software person, present tense\nSYNOPSIS\n     marcus [--coffee] [--vim]\nDESCRIPTION\n     builds systems; trains mind and body; hoards quotes; archives stolen stuff from the internet\n     reach: marcuschiu9@gmail.com'
     };
     const cmdMan = (args) => {
       const t = args.filter((a) => a.charAt(0) !== '-')[0];
@@ -1191,17 +1191,18 @@ class Component extends DCLogic {
         "    ___|__________|___   ",
         "   /__________________\\  "
       ];
+      const age = Math.floor((Date.now() - new Date(1994, 4, 18).getTime()) / (365.25 * 24 * 3600 * 1000));
       const info = [
         [],
         [['marcus', C.user, true], ['@', C.punct], ['home', C.user, true]],
         [['─────────────────', C.dim]],
-        [['OS', C.user], [': HumanOS 30.x (rolling)', C.text]],
+        [['OS', C.user], [': HumanOS ' + age + '.x (rolling)', C.text]],
         [['Host', C.user], [': planet earth, mostly', C.text]],
         [['Shell', C.user], [': zsh + far too much vim', C.text]],
         [['Editor', C.user], [': vim (yes, I can exit it)', C.text]],
-        [['Langs', C.user], [': JS · Go · Python · whatever ships', C.text]],
-        [['Uptime', C.user], [': ~30 years, few crashes', C.text]],
-        [['Coffee', C.user], [': ', C.text], ['████████░░', C.exec], [' 80%', C.text]],
+        [['Langs', C.user], [': Java · Python · English · whatever ships', C.text]],
+        [['Uptime', C.user], [': ~' + age + ' years, few crashes', C.text]],
+        [['Coffee', C.user], [': ', C.text], ['██░░░░░░░░', C.exec], [' 20% (mostly tea)', C.text]],
         [['Contact', C.user], [': marcuschiu9@gmail.com', C.link]]
       ];
       const rows = Math.max(logo.length, info.length);
@@ -1215,11 +1216,13 @@ class Component extends DCLogic {
 
     // ---- git log: a life/career as commit history ----
     const COMMITS = [
-      ['8c1f2a9', 'HEAD -> main, origin/main', 'Fri Jun 13 2026', 'feat: keep shipping things worth being proud of'],
-      ['3b7d004', '', 'Q2 2025', 'perf: bigger systems, calmer on-call'],
-      ['a90f5e1', '', '2023', 'feat(career): joined a team that builds genuinely cool stuff'],
-      ['1de44c7', '', '2019', 'refactor: turned curiosity into a profession'],
-      ['0000000', 'tag: v0.0.0', 'long ago', 'init: hello, world']
+      ['8f3a9e2', '', 'Jun 2026', 'feat: deployed 100GbE lab; fatherhood at scale'],
+      ['5a2c1d9', '', 'May 2026', 'docs: migrated 6,000+ page PKM to static-site architecture'],
+      ['3b7d004', '', '2024', 'perf: established baseline for strength training and fitness'],
+      ['1de44c7', '', '2023', 'feat: resigned from professional post'],
+      ['a90f5e1', '', '2020', 'chore: transitioned to full-time remote operation'],
+      ['5d8e2f3', '', '2017', 'docs: initialized local-first text-based PKMS'],
+      ['0000000', '', 'long ago', 'init: hello, world']
     ];
     const cmdGitLog = () => {
       unlock('gitlog');
@@ -1268,17 +1271,15 @@ class Component extends DCLogic {
 
     // ---- hidden files seeded into the FS, plus the sealed /root ----
     const EGG_FILES = {
-      'home/marcus/.plan': "marcus's .plan\n──────────────\n- always shipping a thing.\n- currently learning: something just outside reach.\n- caffeinated: affirmative.\n\n(yes, people really kept .plan files. ask finger(1). also: try `neofetch`.)",
-      'home/marcus/.secret': "you found a secret. good. there are more.\n\nthe deepest one needs root.\nyou already know the incantation:  sudo su",
+      'home/marcus/.secret': "you found a secret. good. there are more.",
       'home/marcus/.ssh/id_rsa': "-----BEGIN OPENSSH PRIVATE KEY-----\nbm90IG15IHJlYWwga2V5IOKAlCBidXQgeW91J3JlIHRob3JvdWdoLiBuZXh0LCBy\nb3QxMyB0aGlzOiAgZWhhOiBjZXJmZ3Z0cg==\n-----END OPENSSH PRIVATE KEY-----",
       'home/marcus/.ssh/id_rsa.pub': "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5...definitelyNotReal marcus@home",
-      'root/flag.txt': "  ╔══════════════════════════════════════════╗\n  ║   you rooted the box. genuine respect.     ║\n  ╚══════════════════════════════════════════╝\n\nif you dug this deep, you're the kind of person I like building with.\nsay hi:  marcuschiu9@gmail.com\nmention \"the cake is a lie\" so I know you found the flag.",
+      'root/flag.txt': "  ╔══════════════════════════════════════════╗\n  ║   you rooted the box. genuine respect.   ║\n  ╚══════════════════════════════════════════╝",
       'root/.bash_history': "neofetch\ngit log\nmatrix\necho 'what else is hidden around here?'"
     };
     const injectEggs = () => {
       const home = nodeAt(HOME);
       if (home && home.type === 'dir') {
-        if (!home.children['.plan']) home.children['.plan'] = { type: 'file' };
         if (!home.children['.secret']) home.children['.secret'] = { type: 'file' };
         if (!home.children['.ssh']) home.children['.ssh'] = { type: 'dir', children: {} };
         const ssh = home.children['.ssh'];
@@ -1335,7 +1336,8 @@ class Component extends DCLogic {
       ['degauss', 'degaussed the tube'], ['cowsay', 'consulted the cow'], ['top', 'watched the processes'],
       ['xyzzy', 'said the magic word'], ['dmesg', 'read the kernel log'], ['tv', 'lost the signal'],
       ['sound', 'switched on sound'], ['wargames', 'declined to play'], ['qr', 'found the QR code'],
-      ['secret', 'found .secret'], ['idrsa', 'peeked at the key'], ['marcus', 'met marcus'], ['prestige', 'finished the trail']
+      ['secret', 'found .secret'], ['idrsa', 'peeked at the key'], ['marcus', 'met marcus'], ['prestige', 'finished the trail'],
+      ['whisper', 'asked, and the machine answered']
     ];
     const unlock = (id) => { if (!secrets[id]) { secrets[id] = Date.now(); try { localStorage.setItem('mc_secrets', JSON.stringify(secrets)); } catch (e) {} } };
     const cmdAchievements = () => {
@@ -1351,6 +1353,36 @@ class Component extends DCLogic {
       });
       printText('', C.dim);
       if (found === ACHIEVEMENTS.length) printText('100%. you absolute legend — email me: marcuschiu9@gmail.com', C.exec);
+    };
+
+    // ---- whisper: the machine answers root's question from .bash_history ----
+    const WHISPER_HINTS = [
+      ['konami', 'the old contra ritual still works on this tube.'],
+      ['secret', 'dotfiles hide in plain sight. nobody ever lists them all.'],
+      ['idrsa', 'keys left unguarded tend to get read.'],
+      ['tv', 'there are channels beyond this one. most are static.'],
+      ['sl', 'a typo can take you somewhere. mind your spelling when you list things.'],
+      ['snake', 'something slithers here if you call its name.'],
+      ['qr', 'a square made of squares points the way home.'],
+      ['prestige', 'the cipher trail has an end. base64 is only its beginning.'],
+      ['wargames', 'a strange game. the machine still wants to play it.'],
+      ['flag', 'root keeps a flag. roots usually do.'],
+      ['degauss', 'old tubes collect magnetism. and secrets.'],
+      ['xyzzy', 'an adventurer once knew a magic word. nothing happens without it.']
+    ];
+    const cmdWhisper = async () => {
+      unlock('whisper');
+      await wait(700);
+      const left = WHISPER_HINTS.filter((h) => !secrets[h[0]]);
+      if (!left.length) {
+        printText('…nothing. you have found everything. (`achievements` will confirm it.)', C.dim);
+        return;
+      }
+      printText('…the machine hums, then answers:', C.dim);
+      printText('', C.dim);
+      left.slice(0, 3).forEach((h) => printText('    ' + h[1], C.exec));
+      printText('', C.dim);
+      printText('(' + left.length + ' secret' + (left.length === 1 ? '' : 's') + ' still in the dark. ask again as you find them.)', C.dim);
     };
 
     // ---- `eggs`: the full reveal of every hidden command ----
@@ -1442,7 +1474,7 @@ class Component extends DCLogic {
       unlock('top');
       printText('Processes: 42 total, 1 running, 41 daydreaming        Load: 0.42', C.dim);
       [['1', 'marcus', '7.3', 'being_present'], ['42', 'root', '99.9', 'existential_dread'],
-       ['101', 'marcus', '12.0', 'vim'], ['256', 'marcus', '3.1', 'coffee.d'],
+       ['101', 'marcus', '12.0', 'vim'], ['256', 'marcus', '3.1', 'tea.d'],
        ['512', 'marcus', '5.5', 'shipping'], ['666', 'nobody', '0.0', 'side_quests']].forEach((p) => {
         const d = lineEl();
         d.appendChild(span(p[0].padStart(5) + '  ' + p[1].padEnd(8) + p[2].padStart(5) + '%  ', C.dim));
@@ -1599,7 +1631,7 @@ class Component extends DCLogic {
         MARCUS_AVATAR.forEach((l) => printText(l, C.user));
         printText('', C.dim);
         const n = lineEl(); n.appendChild(span('marcus chiu', C.user, { fontWeight: '700' })); n.appendChild(span(' — software, mostly. present tense.', C.text)); printEl(n);
-        printText('builds calm systems · trains mind & body · hoards quotes.', C.dim);
+        printText('trains mind & body · hoards quotes  · archives stolen stuff from the internet', C.dim);
         printText('run `marcus --help`  ·  or just `marcus hire`', C.dim);
         return;
       }
@@ -1660,7 +1692,7 @@ class Component extends DCLogic {
       else if (/contact|email|reach|talk/.test(q)) ans = 'easiest: marcuschiu9@gmail.com  (or run `marcus contact`)';
       else if (/robot|\bai\b|human|real|alive/.test(q)) ans = 'last I checked, no — but I do dream in monospace.';
       else if (/joke|funny/.test(q)) ans = 'I would tell you a UDP joke, but you might not get it.';
-      else if (/coffee|tea/.test(q)) ans = 'always brewing. (well — `coffee` begs to differ.)';
+      else if (/coffee|tea/.test(q)) ans = 'mostly tea, honestly. (`coffee` will confirm.)';
       else if (/vim|editor|emacs/.test(q)) ans = 'vim. always vim. and yes, I can exit it.';
       else if (/love|meaning|life|universe|\b42\b/.test(q)) ans = '42.';
       else if (/project|build|made|portfolio/.test(q)) ans = 'plenty — try `ls`, then `./projects.sh`.';
@@ -1755,6 +1787,7 @@ class Component extends DCLogic {
         case 'whoami': printText(rootMode ? 'root' : 'marcus', C.text); return;
         case 'pwd': printText('/' + cwd.join('/'), C.text); return;
         case 'ls': cmdLs(argv.slice(1)); return;
+        case 'll': cmdLs(['-la'].concat(argv.slice(1))); return;
         case 'cd': cmdCd(argv[1]); return;
         case 'cat': await cmdCat(argv.slice(1)); return;
         case 'vim': case 'vi': case 'nvim': await cmdVim(argv.slice(1)); return;
@@ -1794,7 +1827,7 @@ class Component extends DCLogic {
         case 'eggs': case 'secrets': cmdEggs(); return;
         case 'tic-tac-toe': case 'ttt': case 'wargames': cmdWargames(); return;
         case 'nano': case 'pico': printText('nano? in this house we use vim.', C.err); return;
-        case 'emacs': printText('emacs: a great operating system, lacking only a decent editor. (try vim.)', C.dim); return;
+        case 'emacs': printText('I think you meant vim', C.dim); return;
         case 'ed': printText('ed is the standard text editor.', C.dim); return;
         case 'make': printText(argv[1] === 'love' ? 'make: not war?' : 'make: *** No targets specified.  (make what?)', C.dim); return;
         case 'xyzzy': unlock('xyzzy'); printText('Nothing happens.', C.dim); return;
@@ -1811,6 +1844,14 @@ class Component extends DCLogic {
         case '42': printText('the answer to life, the universe, and everything.', C.exec); return;
         case 'cake': printText('the cake is a lie.', C.err); return;
         case 'coffee': printText("HTTP 418: I'm a teapot.  ☕  (cannot brew coffee.)", C.text); return;
+        case 'echo': {
+          let s = line.replace(/^\s*echo\s?/, '');
+          const m = s.match(/^(['"])([\s\S]*)\1$/);
+          if (m) s = m[2];
+          printText(s, C.text);
+          if (s.trim().toLowerCase() === 'what else is hidden around here?') { await cmdWhisper(); }
+          return;
+        }
         case 'clear': clearScreen(); return;
         case 'uname': printText(argv.indexOf('-a') >= 0 ? 'Darwin home 23.5.0 arm64' : 'Darwin', C.text); return;
         case 'history': history.forEach((h, idx) => {
@@ -1829,7 +1870,7 @@ class Component extends DCLogic {
     };
 
     // ---- autocomplete ----
-    const COMMANDS = ['help', 'whoami', 'ls', 'cd', 'pwd', 'cat', 'vim', 'rm', 'mkdir', 'clear', 'history', 'uname'];
+    const COMMANDS = ['help', 'whoami', 'ls', 'cd', 'pwd', 'cat', 'vim', 'rm', 'mkdir', 'clear', 'history', 'uname', 'echo'];
     const commonPrefix = (arr) => {
       if (!arr.length) return '';
       let p = arr[0];
@@ -1932,11 +1973,11 @@ class Component extends DCLogic {
       };
       self._t = setTimeout(tick, 280);
     });
-    // when the URL is /now (or ?now / #now), the intro auto-runs `cat NOW.txt`
+    // when the URL is /now (or ?now / #now), the intro auto-runs `cat ~/.plan`
     const isNow = /^\/now\/?$/i.test(location.pathname) || /(^|[?&])now(=|&|$)/i.test(location.search) || /^#now$/i.test(location.hash);
-    const introCmd = isNow ? 'cat NOW.txt' : 'cat README.txt';
+    const introCmd = isNow ? 'cat .plan' : 'cat README.txt';
     const renderIntro = async () => {
-      if (isNow) { await cmdCat(['NOW.txt']); printText('', C.dim); printText(HINT, C.dim); return; }
+      if (isNow) { await cmdCat(['.plan']); printText('', C.dim); printText(HINT, C.dim); return; }
       renderReadme();
     };
     const renderReadme = () => {
@@ -2061,9 +2102,9 @@ class Component extends DCLogic {
     window.addEventListener('keydown', this._konami, true);
 
     // ============================================================
-    //  ADMIN MODE  —  Cmd/Ctrl+E  ·  compose & publish NOW.txt
+    //  ADMIN MODE  —  Cmd/Ctrl+E  ·  compose & publish ~/.plan
     //  Talks to server.js (configurable endpoint). On publish the
-    //  server archives the old NOW.txt into NOW/, rebuilds ./root,
+    //  server archives the old .plan into .plans/, rebuilds ./root,
     //  and commits + pushes. See server.js.
     // ============================================================
     const A = {
@@ -2078,14 +2119,14 @@ class Component extends DCLogic {
     let adminEndpoint = 'http://localhost:8787', adminToken = '';
     try { adminEndpoint = localStorage.getItem(ADMIN_EP_KEY) || adminEndpoint; adminToken = localStorage.getItem(ADMIN_TK_KEY) || ''; } catch (e) {}
 
-    const NOW_FOOTER = 'more: cat README.txt';
+    const PLAN_FOOTER = 'more: cat README.txt';
     // footer lines that are auto-generated and must never leak into editable content
     const isFooterLine = (l) => l.trim() === '' || /^more:\s*cat\s+README\.txt/i.test(l) ||
-      /^to see what i was doing/i.test(l) || /^\s*ls\s+NOW\s*$/i.test(l) || /^\s*cat\s+NOW\//i.test(l);
+      /^to see what i was doing/i.test(l) || /^\s*ls\s+(-a\s+)?\.plans\s*$/i.test(l) || /^\s*cat\s+\.plans\//i.test(l);
     const buildNowText = (date, content, archiveHint) => {
       let footer = '';
-      if (archiveHint) footer += 'to see what I was doing:\n  ls NOW\n  cat NOW/' + archiveHint + '\n\n';
-      footer += NOW_FOOTER;
+      if (archiveHint) footer += 'to see what I was doing:\n  ls -a .plans\n  cat .plans/' + archiveHint + '\n\n';
+      footer += PLAN_FOOTER;
       return 'last updated: ' + String(date).trim() + '\n\n' +
         String(content).replace(/\s+$/, '') + '\n\n' + footer + '\n';
     };
@@ -2112,7 +2153,7 @@ class Component extends DCLogic {
       if (!/^https?:\/\//i.test(s)) s = 'https://' + s.replace(/^\/+/, '');
       return s.replace(/\/+$/, '');
     };
-    const embeddedNow = () => { try { return window.__ROOT__.files['home/marcus/NOW.txt']; } catch (e) { return null; } };
+    const embeddedNow = () => { try { return window.__ROOT__.files['home/marcus/.plan']; } catch (e) { return null; } };
     // all directory paths (incl. empty) from the embedded manifest, for the offline fallback
     const embeddedDirs = () => {
       const out = [];
@@ -2128,14 +2169,14 @@ class Component extends DCLogic {
     };
     const embeddedWas = () => {
       const out = [];
-      try { const f = window.__ROOT__.files; Object.keys(f).forEach((k) => { const mm = /^home\/marcus\/NOW\/(.+)$/.exec(k); if (mm) out.push({ name: mm[1], raw: f[k] }); }); } catch (e) {}
+      try { const f = window.__ROOT__.files; Object.keys(f).forEach((k) => { const mm = /^home\/marcus\/\.plans\/(.+)$/.exec(k); if (mm) out.push({ name: mm[1], raw: f[k] }); }); } catch (e) {}
       out.sort((a, b) => b.name.localeCompare(a.name));
       return out;
     };
-    // filename of the archive the new NOW.txt footer should point at (for the preview)
+    // filename of the archive the new .plan footer should point at (for the preview)
     const archiveHintName = () => {
       const names = embeddedWas().map((w) => w.name);
-      if (mode.kind === 'new') { const iso = isoFromLabel(parseNow(embeddedNow()).date); if (iso) names.push(iso + '-NOW.txt'); }
+      if (mode.kind === 'new') { const iso = isoFromLabel(parseNow(embeddedNow()).date); if (iso) names.push('.plan-' + iso); }
       names.sort((a, b) => b.localeCompare(a));
       return names[0] || null;
     };
@@ -2204,11 +2245,11 @@ class Component extends DCLogic {
       if (ui.delBtn) ui.delBtn.style.display = 'none';
       if (ui.action) ui.action.style.display = '';
       if (ui.contentRow) ui.contentRow.style.display = '';
-      // preview only makes sense for the two NOW.txt modes
+      // preview only makes sense for the two .plan modes
       if (ui.prevRow) ui.prevRow.style.display = (m.kind === 'new' || m.kind === 'current') ? '' : 'none';
       // README is freeform: hide the date field + retitle the preview
       if (ui.dateRow) ui.dateRow.style.display = (m.kind === 'readme') ? 'none' : '';
-      if (ui.prevLabel) ui.prevLabel.textContent = 'preview · ' + (m.kind === 'readme' ? 'README.txt' : 'NOW.txt');
+      if (ui.prevLabel) ui.prevLabel.textContent = 'preview · ' + (m.kind === 'readme' ? 'README.txt' : '.plan');
       if (m.kind === 'dir') {
         // directory: nothing to edit, just delete (recursively) — hide the editor fields
         ui.dateRow.style.display = 'none';
@@ -2259,16 +2300,16 @@ class Component extends DCLogic {
       }
       if (m.kind === 'new') {
         ui.modeLabel.textContent = 'new entry';
-        ui.modeHint.textContent = 'publishing archives the current NOW.txt into NOW/, then rebuilds & pushes.';
+        ui.modeHint.textContent = 'publishing archives the current .plan into .plans/, then rebuilds & pushes.';
         ui.date.value = todayLabel(); ui.content.value = ''; ui.content.disabled = false; ui.date.disabled = false;
         ui.action.textContent = 'Publish new →'; ui.action.style.cssText = btnStyle(true);
         renderPreview(); ui.content.focus();
         return;
       }
       if (m.kind === 'current') {
-        ui.modeLabel.textContent = 'edit current'; ui.modeHint.textContent = 'saves NOW.txt in place (no archive), then rebuilds & pushes.';
-        ui.action.textContent = 'Loading…'; setStatus('loading current NOW.txt…');
-        let parsed; try { parsed = parseNow((await api('GET', '/api/now')).raw); setStatus('loaded from server.', A.ok); }
+        ui.modeLabel.textContent = 'edit current'; ui.modeHint.textContent = 'saves .plan in place (no archive), then rebuilds & pushes.';
+        ui.action.textContent = 'Loading…'; setStatus('loading current .plan…');
+        let parsed; try { parsed = parseNow((await api('GET', '/api/plan')).raw); setStatus('loaded from server.', A.ok); }
         catch (e) { const emb = embeddedNow(); parsed = parseNow(emb); setStatus(emb ? 'server offline — loaded embedded copy.' : ('could not load: ' + e.message), emb ? A.dim : A.err); }
         ui.date.value = parsed.date; ui.content.value = parsed.content; ui.date.disabled = false; ui.content.disabled = false;
         ui.action.textContent = 'Save current'; ui.action.style.cssText = btnStyle(true); renderPreview();
@@ -2279,7 +2320,7 @@ class Component extends DCLogic {
       ui.modeHint.textContent = 'saves this archived file in place, then rebuilds & pushes.';
       ui.action.textContent = 'Loading…'; setStatus('loading ' + m.name + '…');
       let raw = null;
-      try { const list = (await api('GET', '/api/was')).items || []; const hit = list.find((x) => x.name === m.name); raw = hit ? hit.raw : null; setStatus('loaded from server.', A.ok); }
+      try { const list = (await api('GET', '/api/plans')).items || []; const hit = list.find((x) => x.name === m.name); raw = hit ? hit.raw : null; setStatus('loaded from server.', A.ok); }
       catch (e) { const hit = embeddedWas().find((x) => x.name === m.name); raw = hit ? hit.raw : null; setStatus(raw != null ? 'server offline — loaded embedded copy.' : ('could not load: ' + e.message), raw != null ? A.dim : A.err); }
       const parsed = parseNow(raw);
       ui.date.value = parsed.date; ui.content.value = parsed.content; ui.date.disabled = false; ui.content.disabled = false;
@@ -2354,11 +2395,11 @@ class Component extends DCLogic {
       adminBusy = true; const prev = ui.action.textContent; ui.action.textContent = 'Working…'; ui.action.style.opacity = '0.6'; setStatus('contacting server…');
       try {
         let resp;
-        if (mode.kind === 'new') resp = await api('POST', '/api/now', { date: date, content: content });
-        else if (mode.kind === 'current') resp = await api('PUT', '/api/now', { date: date, content: content });
+        if (mode.kind === 'new') resp = await api('POST', '/api/plan', { date: date, content: content });
+        else if (mode.kind === 'current') resp = await api('PUT', '/api/plan', { date: date, content: content });
         else if (mode.kind === 'readme') resp = await api('PUT', '/api/readme', { content: content });
         else if (mode.kind === 'file') resp = await api('PUT', '/api/file', { path: date, content: content });
-        else resp = await api('PUT', '/api/was?name=' + encodeURIComponent(mode.name), { date: date, content: content });
+        else resp = await api('PUT', '/api/plans?name=' + encodeURIComponent(mode.name), { date: date, content: content });
         const bits = [];
         if (resp.archived) bits.push('archived → ' + resp.archived);
         if (resp.created) bits.push('created ' + resp.path);
@@ -2419,7 +2460,7 @@ class Component extends DCLogic {
 
       // header — create actions on the left, settings/close on the right
       const head = el('div', 'display:flex;align-items:center;gap:16px;padding:11px 16px;border-bottom:1px solid ' + A.line2 + ';');
-      const newNow = el('button', btnStyle(true), { textContent: '＋ New NOW.txt' }); ui.newNow = newNow;
+      const newNow = el('button', btnStyle(true), { textContent: '＋ New .plan' }); ui.newNow = newNow;
       const newFile = el('button', btnStyle(false) + 'color:' + A.accent + ';', { textContent: '＋ New file' }); ui.newFile = newFile;
       newNow.onclick = () => { if (newNow.dataset.active !== '1') setMode({ kind: 'new' }); };
       newFile.onclick = () => { if (newFile.dataset.active !== '1') setMode({ kind: 'file' }); };
@@ -2494,7 +2535,7 @@ class Component extends DCLogic {
       contentRow.appendChild(ui.content);
 
       const prevRow = el('div', 'display:flex;flex-direction:column;'); ui.prevRow = prevRow;
-      ui.prevLabel = el('div', 'font:400 10.5px/1.3 \'JetBrains Mono\',monospace;color:' + A.faint + ';margin-bottom:6px;', { textContent: 'preview · NOW.txt' });
+      ui.prevLabel = el('div', 'font:400 10.5px/1.3 \'JetBrains Mono\',monospace;color:' + A.faint + ';margin-bottom:6px;', { textContent: 'preview · .plan' });
       prevRow.appendChild(ui.prevLabel);
       ui.preview = el('pre', 'margin:0;background:transparent;border-left:1px solid ' + A.line + ';border-radius:0;padding:2px 0 2px 12px;color:' + A.dim + ';font:400 12px/1.55 \'JetBrains Mono\',monospace;white-space:pre-wrap;word-break:break-word;max-height:150px;overflow:auto;');
       prevRow.appendChild(ui.preview);

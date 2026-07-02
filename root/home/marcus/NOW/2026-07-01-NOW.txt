@@ -1,6 +1,0 @@
-last updated: July 1, 2026
-
-NOW
-- working on this NOW feature
-
-more: cat README.txt
