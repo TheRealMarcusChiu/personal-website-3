@@ -1,6 +1,6 @@
 Hola, my name is Marcus. I'm best reached via [linktree](https://linktr.ee/marcuschiu) or [email](mailto:marcuschiu9@gmail.com).
 
-I try to be present. I work on software systems, and they work with me. Along the way I keep a [var-log](http://git.marcuschiu.com/var-log/) of notes for myself, and a [now](https://git.marcuschiu.com/now) page for my current runtime.
+I try to be present. I work on software systems, and they work with me. Along the way I keep a [var-log](http://git.marcuschiu.com/var-log/) of notes for myself, and a live [now](https://git.marcuschiu.com/now) feed of my current state.
 
 As far as me goes, I enjoy training the mind and the [body](http://git.marcuschiu.com/workouts/), and collecting [quotes](http://git.marcuschiu.com/quotes/) and [stuff](http://git.marcuschiu.com/images/) from around the internet.
 
