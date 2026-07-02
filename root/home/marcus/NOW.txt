@@ -10,7 +10,7 @@ NOW
   - [git.marcuschiu.com/workouts](https://git.marcuschiu.com/workouts) - a log of workout milestones
   - [git.marcuschiu.com/projects](https://git.marcuschiu.com/projects) - a showcase of projects
   - [git.marcuschiu.com/tech](https://git.marcuschiu.com/tech)     - writings on tech
-  - [git.marcuschiu.com/thoughts](https://git.marcuschiu.com/thoughts) - writings on evrything else
+  - [git.marcuschiu.com/thoughts](https://git.marcuschiu.com/thoughts) - writings on everything else
 - reading `The Blessing of Humility` ~ Jerry Bridges
 - upgrading homelab with 100Gb network and smart home automation
 - training for 1RM 135lb weight pullup
