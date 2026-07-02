@@ -1,18 +1,23 @@
-last updated: July 1, 2026
+last updated: July 2, 2026
 
-WORKING ON
-- the terminal homepage you're reading (git.marcuschiu.com)
-- AI tagging so I can search my image archive by content
-- rewriting var-log in Go, slowly, for fun
-
-READING
-- The Unix Programming Environment (Kernighan & Pike)
-
-BODY
-- zone 2 base building + mobility, most mornings
+NOW
+- revamping outdated websites:
+  - [www.marcuschiu.com](https://www.marcuschiu.com)          - this one
+  - [git.marcuschiu.com/now](https://git.marcuschiu.com/now)      - a live now 
+  - [git.marcuschiu.com/var-log](https://git.marcuschiu.com/var-log)  - a personal knowledge garden
+  - [git.marcuschiu.com/images](https://git.marcuschiu.com/images)   - an archive of stolen stuff from the internet
+  - [git.marcuschiu.com/quotes](https://git.marcuschiu.com/quotes)   - an archive of quotes
+  - [git.marcuschiu.com/workouts](https://git.marcuschiu.com/workouts) - a log of workout milestones
+  - [git.marcuschiu.com/projects](https://git.marcuschiu.com/projects) - a showcase of projects
+  - [git.marcuschiu.com/tech](https://git.marcuschiu.com/tech)     - writings on tech
+  - [git.marcuschiu.com/thoughts](https://git.marcuschiu.com/thoughts) - writings on everything else
+- reading `The Blessing of Humility` ~ Jerry Bridges
+- upgrading homelab with 100Gb network and smart home automation
+- training for a 1 rep max 135lb weighted pullup
+- seeking God's character through the things under the sun
 
 to see what I was doing:
   ls -a .plans
-  cat .plans/.plan-2026-05-18
+  cat .plans/.plan-2026-07-01
 
 more: cat README.txt

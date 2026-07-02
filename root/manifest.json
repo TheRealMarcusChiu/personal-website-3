@@ -18,10 +18,16 @@
               "children": {
                 ".plan-2026-05-18": {
                   "type": "file"
+                },
+                ".plan-2026-07-01": {
+                  "type": "file"
                 }
               }
             },
             ".profile": {
+              "type": "file"
+            },
+            "NOW.txt": {
               "type": "file"
             },
             "README.txt": {
