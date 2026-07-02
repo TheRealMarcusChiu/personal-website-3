@@ -4,7 +4,7 @@ NOW
 - revamping outdated websites:
   - [www.marcuschiu.com](https://www.marcuschiu.com)          - this one
   - [git.marcuschiu.com/var-log](https://git.marcuschiu.com/var-log)  - a personal knowledge garden
-  - [git.marcuschiu.com/images](https://git.marcuschiu.com/images)   - an archive of stuff stolen from the internet
+  - [git.marcuschiu.com/images](https://git.marcuschiu.com/images)   - an archive of stolen stuff from the internet
   - [git.marcuschiu.com/quotes](https://git.marcuschiu.com/quotes)   - an archive of quotes
   - [git.marcuschiu.com/workouts](https://git.marcuschiu.com/workouts) - a log of workout milestones
   - [git.marcuschiu.com/projects](https://git.marcuschiu.com/projects) - a showcase of projects
