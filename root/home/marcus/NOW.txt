@@ -15,9 +15,3 @@ NOW
 - upgrading homelab with 100Gb network and smart home automation
 - training for 1RM 135lb weight pullup
 - seeking God's character through things under the sun
-
-to see what I was doing:
-  ls NOW
-  cat NOW/2026-07-01-NOW.txt
-
-more: cat README.txt
