@@ -2115,9 +2115,20 @@ class Component extends DCLogic {
     };
     const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
     const todayLabel = () => { const d = new Date(); return MONTHS[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear(); };
-    const ADMIN_EP_KEY = 'mc_admin_endpoint', ADMIN_TK_KEY = 'mc_admin_token';
+    // Each site lives under the same domain (/thoughts/, /tech/, /now/, …) so it
+    // shares localStorage — namespace the admin config by the first path segment
+    // so every site remembers its OWN endpoint/token between sessions.
+    const SITE_KEY = (function () {
+      const seg = (location.pathname.replace(/^\/+/, '').split('/')[0] || 'root').toLowerCase();
+      return seg.replace(/[^a-z0-9_-]/g, '') || 'root';
+    })();
+    const ADMIN_EP_KEY = 'mc_admin_endpoint:' + SITE_KEY, ADMIN_TK_KEY = 'mc_admin_token:' + SITE_KEY;
     let adminEndpoint = 'http://localhost:8787', adminToken = '';
-    try { adminEndpoint = localStorage.getItem(ADMIN_EP_KEY) || adminEndpoint; adminToken = localStorage.getItem(ADMIN_TK_KEY) || ''; } catch (e) {}
+    try {
+      // migrate any pre-namespace value on first load, then read the site-specific one
+      adminEndpoint = localStorage.getItem(ADMIN_EP_KEY) || localStorage.getItem('mc_admin_endpoint') || adminEndpoint;
+      adminToken = localStorage.getItem(ADMIN_TK_KEY) || localStorage.getItem('mc_admin_token') || '';
+    } catch (e) {}
 
     const PLAN_FOOTER = 'more: cat README.txt';
     // footer lines that are auto-generated and must never leak into editable content
