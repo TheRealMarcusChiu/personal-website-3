@@ -15,9 +15,3 @@ NOW
 - upgrading homelab with 100Gb network and smart home automation
 - training for a 1 rep max 135lb weighted pullup
 - seeking God's character through the things under the sun
-
-to see what I was doing:
-  ls -a .plans
-  cat .plans/.plan-2026-07-01
-
-more: cat README.txt
