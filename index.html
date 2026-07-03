@@ -142,10 +142,20 @@ class Component extends DCLogic {
 
     const nodeAt = (segs) => {
       let n = ROOT;
-      for (const s of segs) { if (n.type !== 'dir' || !n.children[s]) return null; n = n.children[s]; }
-      return n;
+      for (const s of segs) { if (n.type !== 'dir' || !n.children[s]) return null; n = n.children[s]; }      return n;
     };
     const curNode = () => nodeAt(cwd);
+    // Symlinks: a { type:'link', target:'~/.plan' } node reads through to its
+    // target. followLink() maps a path to the real file it points at (one hop,
+    // guarded against loops) so cat/readFile/ls all stay in sync automatically.
+    const followLink = (segs) => {
+      const node = nodeAt(segs);
+      if (node && node.type === 'link' && node.target) {
+        const t = resolve(node.target);
+        if (pathKey(t) !== pathKey(segs)) return t;   // avoid self-referential loop
+      }
+      return segs;
+    };
     const resolve = (p) => {
       if (p === undefined || p === '~' || p === '') return HOME.slice();
       let segs;
@@ -209,6 +219,7 @@ class Component extends DCLogic {
     };
     // read a file's text: user overlay wins, otherwise the embedded/served bytes
     const readFile = (segs) => {
+      segs = followLink(segs);
       const key = pathKey(segs);
       if (Object.prototype.hasOwnProperty.call(overlay.files, key)) return Promise.resolve(overlay.files[key]);
       if (typeof EGG_FILES !== 'undefined' && Object.prototype.hasOwnProperty.call(EGG_FILES, key)) return Promise.resolve(EGG_FILES[key]);
@@ -406,6 +417,7 @@ class Component extends DCLogic {
       if (!node) return C.text;
       if (node.type === 'dir') return C.dir;
       if (node.type === 'exec') return C.exec;
+      if (node.type === 'link') return C.link;
       return C.text;
     };
     const listNames = (node, pred) => {
@@ -427,12 +439,13 @@ class Component extends DCLogic {
       if (long) {
         names.forEach((n) => {
           const child = (n === '.' || n === '..') ? { type: 'dir' } : node.children[n];
-          const isDir = child.type === 'dir', isExec = child.type === 'exec';
-          const perm = isDir ? 'drwxr-xr-x' : isExec ? '-rwxr-xr-x' : '-rw-r--r--';
+          const isDir = child.type === 'dir', isExec = child.type === 'exec', isLink = child.type === 'link';
+          const perm = isDir ? 'drwxr-xr-x' : isLink ? 'lrwxr-xr-x' : isExec ? '-rwxr-xr-x' : '-rw-r--r--';
           const size = isDir ? '512' : String(180 + n.length * 11);
           const d = lineEl();
           d.appendChild(span(perm + '  marcus  staff  ' + size.padStart(5) + '  13 Jun 00:32  ', C.dim));
           d.appendChild(span(n + (isDir ? '/' : ''), colorFor(child)));
+          if (isLink && child.target) { d.appendChild(span(' -> ', C.dim)); d.appendChild(span(child.target, C.text)); }
           printEl(d);
         });
       } else {
@@ -487,7 +500,8 @@ class Component extends DCLogic {
         else if (ck === 'home/marcus/.ssh/id_rsa') unlock('idrsa');
         if (node.type === 'dir') { printText('cat: ' + a + ': Is a directory', C.err); continue; }
         if (node.type === 'readme') { if (!README.length) await loadReadme(); renderReadme(); continue; }
-        // file + exec: overlay content if edited, else the real bytes from ./root
+        // file + exec + symlink: overlay content if edited, else the real bytes.
+        // readFile() follows a symlink to its target automatically.
         const text = await readFile(segs);
         if (text == null) { printText('cat: ' + a + ': could not read file', C.err); continue; }
         // render markdown-style [label](url) links the same way README does
@@ -1281,6 +1295,8 @@ class Component extends DCLogic {
       const home = nodeAt(HOME);
       if (home && home.type === 'dir') {
         if (!home.children['.secret']) home.children['.secret'] = { type: 'file' };
+        // NOW.txt is a symlink to .plan — edit/publish .plan and NOW.txt follows.
+        if (!home.children['NOW.txt']) home.children['NOW.txt'] = { type: 'link', target: '~/.plan' };
         if (!home.children['.ssh']) home.children['.ssh'] = { type: 'dir', children: {} };
         const ssh = home.children['.ssh'];
         if (ssh.children) {
