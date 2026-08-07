@@ -9,5 +9,3 @@ NOW
 to see what I was doing:
   ls -a .plans
   cat .plans/.plan-2026-07-02
-
-more: cat README.txt
