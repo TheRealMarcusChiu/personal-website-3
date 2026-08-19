@@ -98,7 +98,7 @@ class Component extends DCLogic {
     // still links to them by name — seed those URLs so the links keep working.
     const README_LINKS = {
       'linktree.sh': 'https://linktr.ee/marcuschiu',
-      'email.sh': 'mailto:marcuschiu9@gmail.com',
+      'email.sh': 'mailto:marcuschiu@proton.me',
       'code.sh': 'https://github.com/TheRealMarcusChiu',
       'projects.sh': 'http://git.marcuschiu.com/projects/',
       'quotes.sh': 'http://git.marcuschiu.com/quotes/',
@@ -1180,7 +1180,7 @@ class Component extends DCLogic {
       rm: "NAME\n     rm -- remove files\nWARNING\n     `rm -rf /` is not a productivity tip.",
       neofetch: 'NAME\n     neofetch -- show system (and human) information in style',
       man: 'NAME\n     man -- you are here. very meta.',
-      marcus: 'NAME\n     marcus -- software person, present tense\nSYNOPSIS\n     marcus [--coffee] [--vim]\nDESCRIPTION\n     builds systems; trains mind and body; hoards quotes; archives stolen stuff from the internet\n     reach: marcuschiu9@gmail.com'
+      marcus: 'NAME\n     marcus -- software person, present tense\nSYNOPSIS\n     marcus [--coffee] [--vim]\nDESCRIPTION\n     builds systems; trains mind and body; hoards quotes; archives stolen stuff from the internet\n     reach: marcuschiu@proton.me'
     };
     const cmdMan = (args) => {
       const t = args.filter((a) => a.charAt(0) !== '-')[0];
@@ -1217,7 +1217,7 @@ class Component extends DCLogic {
         [['Langs', C.user], [': Java · Python · English · whatever ships', C.text]],
         [['Uptime', C.user], [': ~' + age + ' years, few crashes', C.text]],
         [['Coffee', C.user], [': ', C.text], ['██░░░░░░░░', C.exec], [' 20% (mostly tea)', C.text]],
-        [['Contact', C.user], [': marcuschiu9@gmail.com', C.link]]
+        [['Contact', C.user], [': marcuschiu@proton.me', C.link]]
       ];
       const rows = Math.max(logo.length, info.length);
       for (let i = 0; i < rows; i++) {
@@ -1246,7 +1246,7 @@ class Component extends DCLogic {
         head.appendChild(span('commit ' + c[0] + '0'.repeat(33), C.user));
         if (c[1]) head.appendChild(span(' (' + c[1] + ')', C.exec));
         printEl(head);
-        printText('Author: Marcus Chiu <marcuschiu9@gmail.com>', C.dim);
+        printText('Author: Marcus Chiu <marcuschiu@proton.me>', C.dim);
         printText('Date:   ' + c[2], C.dim);
         printText('', C.dim);
         printText('    ' + c[3], C.text);
@@ -1368,7 +1368,7 @@ class Component extends DCLogic {
         printEl(d);
       });
       printText('', C.dim);
-      if (found === ACHIEVEMENTS.length) printText('100%. you absolute legend — email me: marcuschiu9@gmail.com', C.exec);
+      if (found === ACHIEVEMENTS.length) printText('100%. you absolute legend — email me: marcuschiu@proton.me', C.exec);
     };
 
     // ---- whisper: the machine answers root's question from .bash_history ----
@@ -1616,7 +1616,7 @@ class Component extends DCLogic {
        '',
        'base64 → rot13 → here. that is real dedication.',
        'if you got this far, we should genuinely talk:',
-       'marcuschiu9@gmail.com — subject: "the only winning move"'].forEach((l) => printText(l, C.exec));
+       'marcuschiu@proton.me — subject: "the only winning move"'].forEach((l) => printText(l, C.exec));
     };
 
     // ---- `marcus`: a person, exposed as a CLI ----
@@ -1664,7 +1664,7 @@ class Component extends DCLogic {
       if (sub === 'version' || sub === 'v') { printText('marcus 30.x — stable channel, occasional hotfixes. shipping since 1995.', C.text); return; }
       if (sub === 'json') {
         printText('{', C.dim);
-        [['name', '"Marcus Chiu"'], ['role', '"software person"'], ['status', '"present"'], ['stack', '["js","go","python","whatever ships"]'], ['editor', '"vim"'], ['coffee', 'true'], ['contact', '"marcuschiu9@gmail.com"']].forEach((kv, i, arr) => {
+        [['name', '"Marcus Chiu"'], ['role', '"software person"'], ['status', '"present"'], ['stack', '["js","go","python","whatever ships"]'], ['editor', '"vim"'], ['coffee', 'true'], ['contact', '"marcuschiu@proton.me"']].forEach((kv, i, arr) => {
           const row = lineEl(); row.appendChild(span('  "', C.text)); row.appendChild(span(kv[0], C.exec)); row.appendChild(span('": ' + kv[1] + (i < arr.length - 1 ? ',' : ''), C.text)); printEl(row);
         });
         printText('}', C.dim);
@@ -1673,7 +1673,7 @@ class Component extends DCLogic {
       if (sub === 'hire' || sub === 'work' || sub === 'job') {
         ['> available for genuinely interesting problems.',
          '> I like systems that stay calm under load and code people enjoy reading.',
-         '> if that sounds like your team: marcuschiu9@gmail.com'].forEach((l) => printText(l, C.exec));
+         '> if that sounds like your team: marcuschiu@proton.me'].forEach((l) => printText(l, C.exec));
         printText('(say "the cake is a lie" so I know you did your homework.)', C.dim);
         return;
       }
@@ -1686,7 +1686,7 @@ class Component extends DCLogic {
       if (sub === 'contact' || sub === 'reach') {
         printText('reach me:', C.user);
         const row = (label, node) => { const d = lineEl(); d.appendChild(span('  ' + label.padEnd(10), C.dim)); d.appendChild(node); printEl(d); };
-        row('email', extLink('marcuschiu9@gmail.com', 'mailto:marcuschiu9@gmail.com'));
+        row('email', extLink('marcuschiu@proton.me', 'mailto:marcuschiu@proton.me'));
         row('linktree', extLink('linktr.ee/marcuschiu', 'https://linktr.ee/marcuschiu'));
         row('github', extLink('TheRealMarcusChiu', 'https://github.com/TheRealMarcusChiu'));
         return;
@@ -1704,8 +1704,8 @@ class Component extends DCLogic {
       // AMA fallback — free text in marcus's voice
       const q = rest.toLowerCase();
       let ans;
-      if (/hir|job|\bwork\b|avail/.test(q)) ans = 'always, for the right problem — marcuschiu9@gmail.com';
-      else if (/contact|email|reach|talk/.test(q)) ans = 'easiest: marcuschiu9@gmail.com  (or run `marcus contact`)';
+      if (/hir|job|\bwork\b|avail/.test(q)) ans = 'always, for the right problem — marcuschiu@proton.me';
+      else if (/contact|email|reach|talk/.test(q)) ans = 'easiest: marcuschiu@proton.me  (or run `marcus contact`)';
       else if (/robot|\bai\b|human|real|alive/.test(q)) ans = 'last I checked, no — but I do dream in monospace.';
       else if (/joke|funny/.test(q)) ans = 'I would tell you a UDP joke, but you might not get it.';
       else if (/coffee|tea/.test(q)) ans = 'mostly tea, honestly. (`coffee` will confirm.)';

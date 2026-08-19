@@ -1,4 +1,4 @@
-Hola, my name is Marcus. I'm best reached via [linktree](https://linktr.ee/marcuschiu) or [email](mailto:marcuschiu9@gmail.com).
+Hola, my name is Marcus. I'm best reached via [linktree](https://linktr.ee/marcuschiu) or [email](mailto:marcuschiu@proton.me).
 
 I try to be present. I work on software systems, and they work with me. Along the way I keep a [var-log](http://git.marcuschiu.com/var-log/) of notes for myself.
 

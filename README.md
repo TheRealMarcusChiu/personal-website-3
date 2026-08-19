@@ -168,7 +168,7 @@ deeper layer: `cat ~/.ssh/id_rsa` decodes **base64 → ROT13 → `run: prestige`
 
 ## elsewhere
 
-[github](https://github.com/TheRealMarcusChiu) · [linktree](https://linktr.ee/marcuschiu) · [email](mailto:marcuschiu9@gmail.com)
+[github](https://github.com/TheRealMarcusChiu) · [linktree](https://linktr.ee/marcuschiu) · [email](mailto:marcuschiu@proton.me)
 
 ---
 
