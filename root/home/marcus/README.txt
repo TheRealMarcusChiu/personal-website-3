@@ -6,4 +6,4 @@ As far as me goes, I enjoy training the mind and the [body](http://git.marcuschi
 
 I like to [code](https://github.com/TheRealMarcusChiu) and here are some of my [projects](http://git.marcuschiu.com/projects/). When I'm not writing code, I'm writing about [tech](http://git.marcuschiu.com/tech/) - or whatever [thoughts](http://git.marcuschiu.com/thoughts/) that comes across my mind. Sometimes I write out my [prayers](https://git.marcuschiu.com/meditations/), they keep me in check.
 
-Some of my other hobbies include: [art](https://git.marcuschiu.com/art/), baking, sewing, and playing the guitar
+My other hobbies include: [art](https://git.marcuschiu.com/art/), baking, sewing, and playing the guitar
