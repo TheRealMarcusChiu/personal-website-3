@@ -1,9 +1,9 @@
-Hola, my name is Marcus. I'm best reached via [linktree](https://linktr.ee/marcuschiu) or [email](mailto:marcuschiu@proton.me).
+Hola, I’m Marcus. You can find me through [linktree](https://linktr.ee/marcuschiu) or reach me by [email](mailto:marcuschiu@proton.me).
 
-I try to be present. I work on software systems, and they work with me. Along the way I keep a [var-log](http://git.marcuschiu.com/var-log/) of notes for myself, and a live [now](https://git.marcuschiu.com/now) feed of my current state.
+I try to be present, stay curious, and make things. I build software systems, experiment with AI, and do a little vibe coding to bring project ideas to life. Along the way, I keep a [var-log](http://git.marcuschiu.com/var-log/) of notes and a live [now](https://git.marcuschiu.com/now) feed of what I’m up to.
 
-As far as me goes, I enjoy training the mind and the [body](http://git.marcuschiu.com/workouts/), and collecting [quotes](http://git.marcuschiu.com/quotes/) and [stuff](http://git.marcuschiu.com/images/) from around the internet.
+I enjoy training the mind and [body](http://git.marcuschiu.com/workouts/), collecting [quotes](http://git.marcuschiu.com/quotes/) and [stuff](http://git.marcuschiu.com/images/) from around the internet.
 
-I like to [code](https://github.com/TheRealMarcusChiu) and here are some of my [projects](https://git.marcuschiu.com/github-pages-directory/). When I'm not writing code, I'm writing about [tech](http://git.marcuschiu.com/tech/) - or whatever [thoughts](http://git.marcuschiu.com/thoughts/) that comes across my mind. Sometimes I write out my [prayers](https://git.marcuschiu.com/meditations/), they keep me in check.
+Some of my ideas become [projects](https://git.marcuschiu.com/github-pages-directory/); others become things I write about: [tech](http://git.marcuschiu.com/tech/) or whatever [thoughts](http://git.marcuschiu.com/thoughts/) that comes across my mind. Sometimes I write out my [prayers](https://git.marcuschiu.com/meditations/), too. They help keep me grounded.
 
-My other hobbies include: [art](https://git.marcuschiu.com/art/), baking, sewing, and playing the guitar
+Away from the keyboard, I enjoy [art](https://git.marcuschiu.com/art/), baking, sewing, and playing the guitar.
