@@ -28,7 +28,6 @@ User=root
 Group=root
 
 # Absolute path to the repo checkout (the project root, NOT the server/ subdir).
-# Matches `cd personal-website-3/` from update-production.sh (root's home).
 WorkingDirectory=/root/personal-website-3
 
 # Listen on all interfaces so the container is reachable remotely.

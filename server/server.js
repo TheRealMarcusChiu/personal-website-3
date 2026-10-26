@@ -7,6 +7,7 @@
  *   1. mutates files under ./root (archiving the old .plan into ./root/home/marcus/.plans/)
  *   2. runs `node server/build.js` to regenerate root/manifest.json + root/fs.js
  *   3. git add / commit / push   (so GitHub Pages redeploys)
+ *   4. mirror the files into the therealmarcuschiu.github.io clone and push it (mirror.js)
  *
  * Run:
  *   node server/server.js         (from the project root)
@@ -18,7 +19,6 @@
  *   GIT_BRANCH=main      branch to push (default: current branch)
  *   GIT_REMOTE=origin    remote to push to (default origin)
  *   NO_GIT=1             skip the git commit/push step (handy for local testing)
- *   NO_DEPLOY=1          skip the post-push deploy hook (update-production.sh)
  *   NO_BUILD=1           skip running build.js
  *   NO_MIRROR=1          skip syncing to the github.io repo (see mirror.js; MIRROR_DIR overrides its path)
  *
@@ -90,7 +90,6 @@ function listTree() {
 function listFiles() { return listTree().files; }
 const PLANS_DIR = path.join(MARCUS_DIR, '.plans');   // archive of past .plan entries
 const BUILD_JS = path.join(__dirname, 'build.js');   // build.js sits next to this file in ./server
-const DEPLOY_SH = path.join(__dirname, 'update-production.sh');   // ssh to the web box + git pull
 
 const PORT = parseInt(process.env.PORT || '8787', 10);
 const TOKEN = process.env.ADMIN_TOKEN || '';
@@ -99,7 +98,6 @@ const GIT_BRANCH = process.env.GIT_BRANCH || '';
 const GIT_REMOTE = process.env.GIT_REMOTE || 'origin';
 const NO_GIT = process.env.NO_GIT === '1';
 const NO_BUILD = process.env.NO_BUILD === '1';
-const NO_DEPLOY = process.env.NO_DEPLOY === '1';
 const NO_MIRROR = process.env.NO_MIRROR === '1';
 const VERSION = 'plan-admin/1.1';
 
@@ -189,20 +187,6 @@ function runBuild() {
   }
 }
 
-// After a successful push, tell the production web box to pull the new commit.
-// Never throws — a deploy failure shouldn't undo the (already-pushed) commit.
-function runDeploy() {
-  if (NO_DEPLOY) return 'deploy skipped';
-  if (!fs.existsSync(DEPLOY_SH)) return 'deploy script missing';
-  try {
-    run('bash', [DEPLOY_SH]);
-    return 'deployed';
-  } catch (e) {
-    const detail = (e.stderr || e.stdout || e.message || '').toString().trim().split('\n').slice(-2).join(' ');
-    return 'deploy hook failed: ' + detail;
-  }
-}
-
 // git add -A ; commit ; push. Returns a short human summary; never throws.
 function gitPublish(message) {
   if (NO_GIT) return 'git skipped';
@@ -213,11 +197,9 @@ function gitPublish(message) {
     run('git', ['commit', '-m', message]);
     const branch = GIT_BRANCH || run('git', ['rev-parse', '--abbrev-ref', 'HEAD']);
     run('git', ['push', GIT_REMOTE, branch]);
-    // push succeeded — trigger the production deploy (ssh + git pull on the web box)
-    const deploy = runDeploy();
-    // then copy the same files into the github.io repo (CNAME untouched) and push it too
+    // push succeeded — copy the same files into the github.io repo (CNAME untouched) and push it too
     const mirrored = NO_MIRROR ? 'mirror skipped' : mirror(message);
-    return 'committed & pushed to ' + GIT_REMOTE + '/' + branch + ' · ' + deploy + ' · ' + mirrored;
+    return 'committed & pushed to ' + GIT_REMOTE + '/' + branch + ' · ' + mirrored;
   } catch (e) {
     const detail = (e.stderr || e.stdout || e.message || '').toString().trim().split('\n').slice(-2).join(' ');
     return 'git error: ' + detail;
@@ -422,7 +404,6 @@ server.listen(PORT, () => {
   console.log('  archive:   ' + path.relative(ROOT, PLANS_DIR) + '/');
   console.log('  auth:      ' + (TOKEN ? 'X-Admin-Token required' : 'OPEN (set ADMIN_TOKEN to lock down)'));
   console.log('  git push:  ' + (NO_GIT ? 'disabled (NO_GIT=1)' : 'enabled'));
-  console.log('  deploy:    ' + (NO_DEPLOY ? 'disabled (NO_DEPLOY=1)' : 'update-production.sh after push'));
   console.log('  build.js:  ' + (NO_BUILD ? 'disabled (NO_BUILD=1)' : 'enabled'));
   console.log('  mirror:    ' + (NO_MIRROR || NO_GIT ? 'disabled' : 'github.io repo after push (mirror.js)'));
 });
