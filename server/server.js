@@ -165,8 +165,15 @@ function latestArchiveName() {
   return items.length ? items[0].name : null;
 }
 
+// Never let git/ssh wait on a prompt or a dead host: fail fast instead of freezing the server.
+const SUBPROC_ENV = Object.assign({}, process.env, {
+  GIT_TERMINAL_PROMPT: '0',
+  GIT_SSH_COMMAND: 'ssh -o BatchMode=yes -o ConnectTimeout=15 -o ServerAliveInterval=15 -o ServerAliveCountMax=2'
+});
+const SUBPROC_TIMEOUT = 120000;   // ms — hard cap per command
+
 function run(cmd, args) {
-  return execFileSync(cmd, args, { cwd: ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
+  return execFileSync(cmd, args, { cwd: ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], env: SUBPROC_ENV, timeout: SUBPROC_TIMEOUT }).trim();
 }
 
 function runBuild() {

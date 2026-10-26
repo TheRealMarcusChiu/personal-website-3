@@ -27,8 +27,15 @@ const MIRROR_DIR = process.env.MIRROR_DIR || path.join(SRC, '..', 'therealmarcus
 const MIRROR_REMOTE = process.env.MIRROR_REMOTE || 'origin';
 const KEEP = new Set(['CNAME', '.gitignore']);   // never copied, overwritten, or deleted in the mirror (.git is never walked)
 
+// Never let git/ssh wait on a prompt or a dead host: fail fast instead of freezing the server.
+const SUBPROC_ENV = Object.assign({}, process.env, {
+  GIT_TERMINAL_PROMPT: '0',
+  GIT_SSH_COMMAND: 'ssh -o BatchMode=yes -o ConnectTimeout=15 -o ServerAliveInterval=15 -o ServerAliveCountMax=2'
+});
+const SUBPROC_TIMEOUT = 120000;   // ms — hard cap per command
+
 function git(cwd, args) {
-  return execFileSync('git', args, { cwd: cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
+  return execFileSync('git', args, { cwd: cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], env: SUBPROC_ENV, timeout: SUBPROC_TIMEOUT }).trim();
 }
 function tracked(cwd) {
   const out = git(cwd, ['ls-files', '-z']);
