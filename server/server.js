@@ -256,6 +256,8 @@ function send(res, code, obj) {
     'Access-Control-Allow-Origin': ALLOW_ORIGIN,
     'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Token',
+    // let pages on a public origin (marcuschiu.com) call this private-network host (Chrome PNA preflight)
+    'Access-Control-Allow-Private-Network': 'true',
     'Cache-Control': 'no-store'
   });
   res.end(body);
