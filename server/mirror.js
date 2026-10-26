@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /*
  * mirror.js — copy this repo's tracked files into a clone of the GitHub Pages repo
- * (therealmarcuschiu.github.io), then commit & push there.
+ * (therealmarcuschiu.github.io), then commit & push there. Everything tracked is copied
+ * except .gitignore; the mirror's own CNAME and .gitignore are left alone.
  *
  * The mirror is a plain file sync, not a git history push: the github.io repo has its
  * own history and a CNAME this repo doesn't. Anything listed in KEEP is never written,
@@ -24,7 +25,7 @@ const { execFileSync } = require('child_process');
 const SRC = path.join(__dirname, '..');   // project root (mirror.js lives in ./server)
 const MIRROR_DIR = process.env.MIRROR_DIR || path.join(SRC, '..', 'therealmarcuschiu.github.io');
 const MIRROR_REMOTE = process.env.MIRROR_REMOTE || 'origin';
-const KEEP = new Set(['CNAME']);   // mirror-only files — never touched
+const KEEP = new Set(['CNAME', '.gitignore']);   // never copied, overwritten, or deleted in the mirror (.git is never walked)
 
 function git(cwd, args) {
   return execFileSync('git', args, { cwd: cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
@@ -57,7 +58,7 @@ function mirror(message) {
       fs.copyFileSync(from, to);
     }
 
-    git(MIRROR_DIR, ['add', '-A', '--', '.', ':(exclude)CNAME']);
+    git(MIRROR_DIR, ['add', '-A', '--', '.'].concat(Array.from(KEEP, (k) => ':(exclude)' + k)));
     try { git(MIRROR_DIR, ['diff', '--cached', '--quiet']); return 'mirror: no changes'; } catch (e) { /* there ARE changes */ }
     git(MIRROR_DIR, ['commit', '-m', message || 'sync from personal-website-3']);
     const branch = git(MIRROR_DIR, ['rev-parse', '--abbrev-ref', 'HEAD']);
