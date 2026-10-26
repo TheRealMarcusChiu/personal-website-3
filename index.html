@@ -2139,7 +2139,7 @@ class Component extends DCLogic {
       return seg.replace(/[^a-z0-9_-]/g, '') || 'root';
     })();
     const ADMIN_EP_KEY = 'mc_admin_endpoint:' + SITE_KEY, ADMIN_TK_KEY = 'mc_admin_token:' + SITE_KEY;
-    let adminEndpoint = 'http://localhost:8787', adminToken = '';
+    let adminEndpoint = 'https://git.home.lan', adminToken = '';
     try {
       // migrate any pre-namespace value on first load, then read the site-specific one
       adminEndpoint = localStorage.getItem(ADMIN_EP_KEY) || localStorage.getItem('mc_admin_endpoint') || adminEndpoint;
@@ -2208,7 +2208,7 @@ class Component extends DCLogic {
       return names[0] || null;
     };
     const api = async (method, p, body) => {
-      const base = normEndpoint(adminEndpoint) || 'http://localhost:8787';
+      const base = normEndpoint(adminEndpoint) || 'https://git.home.lan';
       const path = p.charAt(0) === '/' ? p : '/' + p;   // guarantee the separator slash
       const res = await fetch(base + path, {
         method: method,
@@ -2464,7 +2464,7 @@ class Component extends DCLogic {
     };
 
     const saveConfig = () => {
-      adminEndpoint = normEndpoint(ui.endpoint.value) || 'http://localhost:8787';
+      adminEndpoint = normEndpoint(ui.endpoint.value) || 'https://git.home.lan';
       try { localStorage.setItem(ADMIN_EP_KEY, adminEndpoint); } catch (e) {}
       ui.endpoint.value = adminEndpoint;
       setStatus('endpoint saved: ' + adminEndpoint, A.ok);
@@ -2511,7 +2511,7 @@ class Component extends DCLogic {
       const cfg = el('div', 'display:none;gap:16px;align-items:flex-end;padding:12px 18px;border-bottom:1px solid ' + A.line2 + ';flex-wrap:wrap;'); ui.cfg = cfg;
       const epWrap = el('div', 'flex:2;min-width:220px;');
       epWrap.appendChild(el('div', 'font:400 10.5px/1.3 \'JetBrains Mono\',monospace;color:' + A.faint + ';margin-bottom:6px;', { textContent: 'server endpoint' }));
-      ui.endpoint = el('input', inputStyle, { type: 'text', value: adminEndpoint, placeholder: 'http://localhost:8787', spellcheck: false, autocapitalize: 'off', autocomplete: 'off' });
+      ui.endpoint = el('input', inputStyle, { type: 'text', value: adminEndpoint, placeholder: 'https://git.home.lan', spellcheck: false, autocapitalize: 'off', autocomplete: 'off' });
       epWrap.appendChild(ui.endpoint);
       const saveCfg = el('button', btnStyle(false), { textContent: 'Save' }); saveCfg.onclick = saveConfig;
       const testCfg = el('button', btnStyle(false), { textContent: 'Test' }); testCfg.onclick = testConfig;
