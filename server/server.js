@@ -20,6 +20,7 @@
  *   NO_GIT=1             skip the git commit/push step (handy for local testing)
  *   NO_DEPLOY=1          skip the post-push deploy hook (update-production.sh)
  *   NO_BUILD=1           skip running build.js
+ *   NO_MIRROR=1          skip syncing to the github.io repo (see mirror.js; MIRROR_DIR overrides its path)
  *
  * No npm dependencies — Node standard library only.
  *
@@ -47,6 +48,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
+const { mirror } = require('./mirror');
 
 const ROOT = path.join(__dirname, '..');   // project root (server.js lives in ./server)
 const MARCUS_DIR = path.join(ROOT, 'root', 'home', 'marcus');
@@ -98,6 +100,7 @@ const GIT_REMOTE = process.env.GIT_REMOTE || 'origin';
 const NO_GIT = process.env.NO_GIT === '1';
 const NO_BUILD = process.env.NO_BUILD === '1';
 const NO_DEPLOY = process.env.NO_DEPLOY === '1';
+const NO_MIRROR = process.env.NO_MIRROR === '1';
 const VERSION = 'plan-admin/1.1';
 
 const PLAN_FOOTER = 'more: cat README.txt';
@@ -205,7 +208,9 @@ function gitPublish(message) {
     run('git', ['push', GIT_REMOTE, branch]);
     // push succeeded — trigger the production deploy (ssh + git pull on the web box)
     const deploy = runDeploy();
-    return 'committed & pushed to ' + GIT_REMOTE + '/' + branch + (deploy ? ' · ' + deploy : '');
+    // then copy the same files into the github.io repo (CNAME untouched) and push it too
+    const mirrored = NO_MIRROR ? 'mirror skipped' : mirror(message);
+    return 'committed & pushed to ' + GIT_REMOTE + '/' + branch + ' · ' + deploy + ' · ' + mirrored;
   } catch (e) {
     const detail = (e.stderr || e.stdout || e.message || '').toString().trim().split('\n').slice(-2).join(' ');
     return 'git error: ' + detail;
@@ -410,4 +415,5 @@ server.listen(PORT, () => {
   console.log('  git push:  ' + (NO_GIT ? 'disabled (NO_GIT=1)' : 'enabled'));
   console.log('  deploy:    ' + (NO_DEPLOY ? 'disabled (NO_DEPLOY=1)' : 'update-production.sh after push'));
   console.log('  build.js:  ' + (NO_BUILD ? 'disabled (NO_BUILD=1)' : 'enabled'));
+  console.log('  mirror:    ' + (NO_MIRROR || NO_GIT ? 'disabled' : 'github.io repo after push (mirror.js)'));
 });
