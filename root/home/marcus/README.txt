@@ -4,4 +4,4 @@ I try to be present, cultivate my curiosity, and make things. I build software s
 
 Some of my ideas become [projects](https://git.marcuschiu.com/github-pages-directory/), others become [thoughts](https://git.marcuschiu.com/thoughts/), and sometimes they come from collecting [stuff](https://git.marcuschiu.com/images/) from around the internet.
 
-Anyways - I enjoy [meditating](https://git.marcuschiu.com/meditations/), training the mind and [body](https://git.marcuschiu.com/workouts/), [baking](https://git.marcuschiu.com/baking/), sewing, playing the [guitar](https://git.marcuschiu.com/guitar/), and making [art](https://git.marcuschiu.com/art/).
+Anyways - I enjoy [meditating](https://git.marcuschiu.com/meditations/), training the mind and [body](https://git.marcuschiu.com/workouts/), sewing, [baking](https://git.marcuschiu.com/baking/), playing the [guitar](https://git.marcuschiu.com/guitar/), bouldering, and making [art](https://git.marcuschiu.com/art/).
